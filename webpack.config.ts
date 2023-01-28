@@ -50,11 +50,6 @@ const generateConfig: WebpackConfigurationGenerator = (_env, argv) => {
       rules: [
         {
           test: /\.(js|jsx|ts|tsx)$/,
-          enforce: 'pre',
-          loader: 'source-map-loader',
-        },
-        {
-          test: /\.(js|jsx|ts|tsx)$/,
           exclude: /node_modules/,
           use: [
             {

@@ -30,13 +30,11 @@ export const selectVoxelPositions = (state: RootState) => {
   const { data } = state.generate;
 
   const vexels: Vector3Tuple[] = [];
-  for (let x = 0; x < data.length; x++) {
-    // z goes forward
-    for (let z = 0; z < data[x].length; z++) {
-      if (data[z][x] > 0) {
-        for (let y = 0; y < data[z][x]; y++) {
-          vexels.push([x, y, z]);
-        }
+  for (let y = 0; y < data.length; y++) {
+    for (let x = 0; x < data[y].length; x++) {
+      for (let z = 0; z < data[y][x]; z++) {
+        // column height represented by number is rendered on y axis
+        vexels.push([x, z, y]);
       }
     }
   }

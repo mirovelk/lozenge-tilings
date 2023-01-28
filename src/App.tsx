@@ -14,7 +14,7 @@ function App() {
   const dispatch = useAppDispatch();
 
   const generateTiling = useCallback(() => {
-    dispatch(generate({ iterations: 1000 }));
+    dispatch(generate({ iterations: 10000 }));
   }, [dispatch]);
 
   return (
