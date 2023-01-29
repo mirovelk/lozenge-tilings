@@ -5,6 +5,9 @@ import {
   OrbitControls,
 } from '@react-three/drei';
 import { Canvas, ThreeElements } from '@react-three/fiber';
+import { useMemo } from 'react';
+import * as THREE from 'three';
+import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
 import { selectVoxelPositions } from '../../redux/features/generate/generateSlice';
 import { useAppSelector } from '../../redux/store';
 
@@ -20,15 +23,27 @@ function alignToGrid(
   ];
 }
 
-function Voxel({
-  position,
+function MergedVoxels({
+  positions,
   ...props
-}: ThreeElements['mesh'] & { position: [number, number, number] }) {
+}: ThreeElements['mesh'] & { positions: [number, number, number][] }) {
+  const geometry = useMemo(() => {
+    if (positions.length === 0) {
+      return new THREE.BufferGeometry();
+    }
+    const boxes = positions.map((position) => {
+      const box = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
+      box.translate(...alignToGrid(position));
+      return box;
+    });
+    const base = mergeBufferGeometries(boxes);
+    return base;
+  }, [positions]);
+
   return (
-    <mesh position={alignToGrid(position)} {...props}>
-      <boxGeometry args={[voxelSize, voxelSize, voxelSize]} />
+    <mesh {...props} geometry={geometry}>
       <meshStandardMaterial color="#ff0000" opacity={0.8} transparent />
-      <Edges />
+      {positions.length > 0 && <Edges geometry={geometry} />}
     </mesh>
   );
 }
@@ -44,9 +59,7 @@ function MainScene() {
       <ambientLight color="#606060" />
       <directionalLight position={[1, 0.75, 0.5]} />
       <gridHelper args={[1000, 20]} />
-      {positions.map((position, index) => (
-        <Voxel position={position} key={index} />
-      ))}
+      <MergedVoxels positions={positions} />
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport
           axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']}
