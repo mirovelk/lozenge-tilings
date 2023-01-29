@@ -2,28 +2,54 @@ function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+export interface LozengeTilingPeriods {
+  pX: number;
+  pY: number;
+  pZ: number;
+}
+
+//    y
+//    |
+//    +-- x
+//   /
+//  z
+// 2D array of numbers ([z][x] axis), where each number represents the height of a column ([y])
 export type LozengeTiling = number[][];
 
 class IndexSafeLozengeTiling {
+  private pX: number;
+  private pY: number;
+  private pZ: number;
+
   private data: LozengeTiling = [];
 
-  get(x: number, y: number) {
-    return this.data?.[y]?.[x] ?? 0;
+  constructor({ pX, pY, pZ }: LozengeTilingPeriods) {
+    this.pX = pX;
+    this.pY = pY;
+    this.pZ = pZ;
   }
 
-  set(x: number, y: number, value: number) {
-    if (!this.data[y]) {
-      this.data[y] = [];
+  private zP(z: number) {
+    return this.pZ > 0 ? z % this.pZ : z;
+  }
+
+  get(z: number, x: number) {
+    return this.data?.[this.zP(z)]?.[x] ?? 0;
+  }
+
+  set(z: number, x: number, value: number) {
+    if (!this.data[this.zP(z)]) {
+      this.data[this.zP(z)] = [];
     }
-    this.data[y][x] = value;
+    this.data[z][x] = value;
   }
 
-  rowCount() {
+  zLength() {
     return this.data.length;
   }
 
-  rowLength(rowIndex: number) {
-    return this.data[rowIndex]?.length ?? 0;
+  xLength(z: number) {
+    return this.data[z]?.length ?? 0;
   }
 
   getData() {
@@ -36,13 +62,13 @@ function getPossibleNextTiles(
 ): Array<[number, number]> {
   const possibleNextTiles: Array<[number, number]> = [];
 
-  for (let y = 0; y < tiles.rowCount() + 1; y++) {
-    for (let x = 0; x < tiles.rowLength(y) + 1; x++) {
+  for (let z = 0; z < tiles.zLength() + 1; z++) {
+    for (let x = 0; x < tiles.xLength(z) + 1; x++) {
       if (
-        (x === 0 || tiles.get(x - 1, y) > tiles.get(x, y)) && // is on left edge or has left tile
-        (y === 0 || tiles.get(x, y - 1) > tiles.get(x, y)) // is on bottom edge or has bottom tile
+        (x === 0 || tiles.get(z, x - 1) > tiles.get(z, x)) &&
+        (z === 0 || tiles.get(z - 1, x) > tiles.get(z, x))
       ) {
-        possibleNextTiles.push([x, y]);
+        possibleNextTiles.push([z, x]);
       }
     }
   }
@@ -51,17 +77,19 @@ function getPossibleNextTiles(
 
 export function generateRandomLozengeTiling({
   iterations,
+  periods,
 }: {
   iterations: number;
+  periods: LozengeTilingPeriods;
 }): LozengeTiling {
-  const lozengeTiling = new IndexSafeLozengeTiling();
+  const lozengeTiling = new IndexSafeLozengeTiling(periods);
 
   for (let i = 0; i < iterations; i++) {
     const possibleNextTiles = getPossibleNextTiles(lozengeTiling);
 
-    const [x, y] =
+    const [z, x] =
       possibleNextTiles[randomIntFromInterval(0, possibleNextTiles.length - 1)];
-    lozengeTiling.set(x, y, lozengeTiling.get(x, y) + 1);
+    lozengeTiling.set(z, x, lozengeTiling.get(z, x) + 1);
   }
 
   return lozengeTiling.getData();

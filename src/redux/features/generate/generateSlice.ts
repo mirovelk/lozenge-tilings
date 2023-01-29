@@ -19,7 +19,17 @@ export const generateSlice = createSlice({
   name: 'generate',
   initialState,
   reducers: {
-    generate: (state, action: PayloadAction<{ iterations: number }>) => {
+    generate: (
+      state,
+      action: PayloadAction<{
+        iterations: number;
+        periods: {
+          pX: number;
+          pY: number;
+          pZ: number;
+        };
+      }>
+    ) => {
       state.data = generateRandomLozengeTiling(action.payload);
     },
   },

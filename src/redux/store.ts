@@ -2,10 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 import generateReducer from './features/generate/generateSlice';
+import configReducer from './features/config/configSlice';
 
 const store = configureStore({
   reducer: {
     generate: generateReducer,
+    config: configReducer,
   },
 });
 
