@@ -1,5 +1,5 @@
-import { Button, Paper, css, styled } from '@mui/material';
-import { useCallback } from 'react';
+import { Button, Paper, css, styled, Input, Typography } from '@mui/material';
+import { useCallback, useState } from 'react';
 import MainScene from './components/MainScene';
 
 import StyleProvider from './components/StyleProvider';
@@ -13,9 +13,26 @@ const Panel = styled(Paper)`
 function App() {
   const dispatch = useAppDispatch();
 
+  const [iterationsInputValue, setIterationsInputValue] =
+    useState<string>('10000');
+  const [iterationsValid, setIterationsValid] = useState(true);
+
+  const onIterationsChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setIterationsInputValue(e.target.value);
+
+      if (e.target.value === '' || Number(e.target.value) < 0) {
+        setIterationsValid(false);
+      } else {
+        setIterationsValid(true);
+      }
+    },
+    []
+  );
+
   const generateTiling = useCallback(() => {
-    dispatch(generate({ iterations: 10_000 }));
-  }, [dispatch]);
+    dispatch(generate({ iterations: Number(iterationsInputValue) }));
+  }, [dispatch, iterationsInputValue]);
 
   return (
     <StyleProvider>
@@ -30,11 +47,46 @@ function App() {
         <Panel
           css={css`
             margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
           `}
         >
-          <Button variant="contained" onClick={generateTiling}>
-            Generate
-          </Button>
+          <div>
+            <div
+              css={css`
+                display: flex;
+              `}
+            >
+              <Typography
+                variant="subtitle1"
+                color="text.secondary"
+                css={css`
+                  margin-right: 10px;
+                `}
+              >
+                Iterations:
+              </Typography>
+              <Input
+                value={iterationsInputValue}
+                type="number"
+                error={!iterationsValid}
+                onChange={onIterationsChange}
+                css={css`
+                  margin-right: 10px;
+                `}
+              />
+            </div>
+          </div>
+          <div>
+            <Button
+              variant="contained"
+              onClick={generateTiling}
+              disabled={!iterationsValid}
+            >
+              Generate
+            </Button>
+          </div>
         </Panel>
         <Panel
           css={css`
