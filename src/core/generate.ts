@@ -89,6 +89,7 @@ function getPossibleNextTiles(
 ): Array<[number, number]> {
   const possibleNextTiles: Array<[number, number]> = [];
 
+  // TODO reflect periods
   for (let z = 0; z < tiles.zLength() + 1; z++) {
     for (let x = 0; x < tiles.xLength(z) + 1; x++) {
       const y = tiles.get(z, x);
