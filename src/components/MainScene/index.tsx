@@ -53,7 +53,12 @@ function MainScene() {
 
   return (
     <Canvas
-      camera={{ fov: 45, near: 1, far: 100000, position: [600, 800, 1300] }}
+      camera={{
+        fov: 45,
+        near: 1,
+        far: 100000,
+        position: [3000, 1500, 3000],
+      }}
     >
       <color attach="background" args={['#dfdfdf']} />
       <ambientLight color="#606060" />

@@ -11,10 +11,10 @@ interface ConfigState {
 }
 
 const initialState: ConfigState = {
-  pX: 0,
+  pX: 10,
   pY: 0,
-  pZ: 0,
-  interations: 10_000,
+  pZ: 10,
+  interations: 1_000,
   valid: true,
 };
 

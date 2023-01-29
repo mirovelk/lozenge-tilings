@@ -1,5 +1,5 @@
 import { Button, Paper, css, styled } from '@mui/material';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 
@@ -69,6 +69,11 @@ function App() {
     );
   }, [dispatch, iterations, pX, pY, pZ]);
 
+  // initial generation
+  useEffect(() => {
+    generateTiling();
+  }, [generateTiling]);
+
   return (
     <StyleProvider>
       <div
@@ -94,25 +99,25 @@ function App() {
           >
             <ConfigNumberInputWithLabel
               label="Iterations:"
-              initialValue={10_000}
+              initialValue={iterations}
               inputValueValid={(value) => value !== '' && Number(value) > 0}
               onValidChange={onIterationsChange}
             />
             <ConfigNumberInputWithLabel
               label="pX:"
-              initialValue={0}
+              initialValue={pX}
               inputValueValid={isInputValueValidPeriod}
               onValidChange={onPeriodXChange}
             />
             <ConfigNumberInputWithLabel
               label="pY:"
-              initialValue={0}
+              initialValue={pY}
               inputValueValid={isInputValueValidPeriod}
               onValidChange={onPeriodYChange}
             />
             <ConfigNumberInputWithLabel
               label="pZ:"
-              initialValue={0}
+              initialValue={pZ}
               inputValueValid={isInputValueValidPeriod}
               onValidChange={onPeriodZChange}
             />

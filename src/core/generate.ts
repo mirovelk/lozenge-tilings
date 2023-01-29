@@ -33,8 +33,12 @@ class IndexSafeLozengeTiling {
     return this.pZ > 0 ? z % this.pZ : z;
   }
 
+  private xP(x: number) {
+    return this.pX > 0 ? x % this.pX : x;
+  }
+
   get(z: number, x: number) {
-    return this.data?.[this.zP(z)]?.[x] ?? 0;
+    return this.data?.[this.zP(z)]?.[this.xP(x)] ?? 0;
   }
 
   set(z: number, x: number, value: number) {
