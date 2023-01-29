@@ -45,7 +45,7 @@ class IndexSafeLozengeTiling {
     if (!this.data[this.zP(z)]) {
       this.data[this.zP(z)] = [];
     }
-    this.data[z][x] = value;
+    this.data[this.zP(z)][this.xP(x)] = value;
   }
 
   zLength() {
@@ -68,6 +68,7 @@ function getPossibleNextTiles(
 
   for (let z = 0; z < tiles.zLength() + 1; z++) {
     for (let x = 0; x < tiles.xLength(z) + 1; x++) {
+      // const y = tiles.get(z, x);
       if (
         (x === 0 || tiles.get(z, x - 1) > tiles.get(z, x)) &&
         (z === 0 || tiles.get(z - 1, x) > tiles.get(z, x))
