@@ -69,7 +69,7 @@ function App() {
     );
   }, [dispatch, iterations, pX, pY, pZ]);
 
-  // initial generation
+  // auto generate on config change
   useEffect(() => {
     generateTiling();
   }, [generateTiling]);

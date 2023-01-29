@@ -17,24 +17,36 @@ export interface LozengeTilingPeriods {
 export type LozengeTiling = number[][];
 
 class IndexSafeLozengeTiling {
-  private pX: number;
-  private pY: number;
-  private pZ: number;
+  private _pX: number;
+  private _pY: number;
+  private _pZ: number;
 
   private data: LozengeTiling = [];
 
   constructor({ pX, pY, pZ }: LozengeTilingPeriods) {
-    this.pX = pX;
-    this.pY = pY;
-    this.pZ = pZ;
+    this._pX = pX;
+    this._pY = pY;
+    this._pZ = pZ;
+  }
+
+  get pX() {
+    return this._pX;
+  }
+
+  get pY() {
+    return this._pY;
+  }
+
+  get pZ() {
+    return this._pZ;
   }
 
   private zP(z: number) {
-    return this.pZ > 0 ? z % this.pZ : z;
+    return this._pZ > 0 ? z % this._pZ : z;
   }
 
   private xP(x: number) {
-    return this.pX > 0 ? x % this.pX : x;
+    return this._pX > 0 ? x % this._pX : x;
   }
 
   get(z: number, x: number) {
@@ -61,6 +73,17 @@ class IndexSafeLozengeTiling {
   }
 }
 
+function containsBox(
+  tiles: IndexSafeLozengeTiling,
+  x: number,
+  y: number,
+  z: number
+) {
+  // TODO reflect periods
+
+  return tiles.get(z, x) > y;
+}
+
 function getPossibleNextTiles(
   tiles: IndexSafeLozengeTiling
 ): Array<[number, number]> {
@@ -68,10 +91,12 @@ function getPossibleNextTiles(
 
   for (let z = 0; z < tiles.zLength() + 1; z++) {
     for (let x = 0; x < tiles.xLength(z) + 1; x++) {
-      // const y = tiles.get(z, x);
+      const y = tiles.get(z, x);
+
       if (
-        (x === 0 || tiles.get(z, x - 1) > tiles.get(z, x)) &&
-        (z === 0 || tiles.get(z - 1, x) > tiles.get(z, x))
+        (x === 0 || containsBox(tiles, x - 1, y, z)) &&
+        (y === 0 || containsBox(tiles, x, y - 1, z)) &&
+        (z === 0 || containsBox(tiles, x, y, z - 1))
       ) {
         possibleNextTiles.push([z, x]);
       }

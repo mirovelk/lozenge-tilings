@@ -8,6 +8,7 @@ import { Canvas, ThreeElements } from '@react-three/fiber';
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
+import { selectPeriods } from '../../redux/features/config/configSlice';
 import { selectVoxelPositions } from '../../redux/features/generate/generateSlice';
 import { useAppSelector } from '../../redux/store';
 
@@ -25,8 +26,12 @@ function alignToGrid(
 
 function MergedVoxels({
   positions,
+  color,
   ...props
-}: ThreeElements['mesh'] & { positions: [number, number, number][] }) {
+}: ThreeElements['mesh'] & {
+  positions: [number, number, number][];
+  color: string;
+}) {
   const geometry = useMemo(() => {
     if (positions.length === 0) {
       return new THREE.BufferGeometry();
@@ -42,7 +47,7 @@ function MergedVoxels({
 
   return (
     <mesh {...props} geometry={geometry}>
-      <meshStandardMaterial color="#ff0000" opacity={0.8} transparent />
+      <meshStandardMaterial color={color} opacity={0.8} transparent />
       {positions.length > 0 && <Edges geometry={geometry} />}
     </mesh>
   );
@@ -50,6 +55,7 @@ function MergedVoxels({
 
 function MainScene() {
   const positions = useAppSelector(selectVoxelPositions);
+  const { pX, pY, pZ } = useAppSelector(selectPeriods);
 
   return (
     <Canvas
@@ -64,7 +70,25 @@ function MainScene() {
       <ambientLight color="#606060" />
       <directionalLight position={[1, 0.75, 0.5]} />
       <gridHelper args={[1000, 20]} />
-      <MergedVoxels positions={positions} />
+      <MergedVoxels positions={positions} color="#ff0000" />
+      {/* {pX > 0 && (
+        <>
+          <MergedVoxels
+            positions={positions}
+            color="#00ff00"
+            position={[pX * voxelSize, 0, 0]}
+          />
+        </>
+      )}
+      {pZ > 0 && (
+        <>
+          <MergedVoxels
+            positions={positions}
+            color="#ff8400"
+            position={[0, 0, pZ * voxelSize]}
+          />
+        </>
+      )} */}
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport
           axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']}
