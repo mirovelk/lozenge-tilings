@@ -1,20 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { LozengeTilingPeriods } from '../../../core/generate';
 
 import { RootState } from '../../store';
 
 interface ConfigState {
-  pX: number;
-  pY: number;
-  pZ: number;
+  periods: LozengeTilingPeriods;
   interations: number;
   valid: boolean;
 }
 
 const initialState: ConfigState = {
-  pX: 10,
-  pY: 0,
-  pZ: 10,
-  interations: 1_000,
+  periods: {
+    xShift: 0,
+    yShift: 0,
+    zHeight: 0,
+  },
+  interations: 10,
   valid: true,
 };
 
@@ -22,14 +23,11 @@ export const generateSlice = createSlice({
   name: 'config',
   initialState,
   reducers: {
-    pXUpdated: (state, action: PayloadAction<{ period: number }>) => {
-      state.pX = action.payload.period;
-    },
-    pYUpdated: (state, action: PayloadAction<{ period: number }>) => {
-      state.pY = action.payload.period;
-    },
-    pZUpdated: (state, action: PayloadAction<{ period: number }>) => {
-      state.pZ = action.payload.period;
+    periodUpdated: (
+      state,
+      action: PayloadAction<Partial<LozengeTilingPeriods>>
+    ) => {
+      state.periods = { ...state.periods, ...action.payload };
     },
     iterationsUpdated: (
       state,
@@ -45,8 +43,8 @@ export const generateSlice = createSlice({
 
 // Selectors
 export const selectPeriods = (state: RootState) => {
-  const { pX, pY, pZ } = state.config;
-  return { pX, pY, pZ };
+  const { periods } = state.config;
+  return periods;
 };
 
 export const selectIterations = (state: RootState) => {
@@ -61,12 +59,6 @@ export const selectIsConfigValid = (state: RootState) => {
 
 const { actions, reducer } = generateSlice;
 
-export const {
-  pXUpdated,
-  pYUpdated,
-  pZUpdated,
-  iterationsUpdated,
-  configValidated,
-} = actions;
+export const { periodUpdated, iterationsUpdated, configValidated } = actions;
 
 export default reducer;

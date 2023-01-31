@@ -3,6 +3,7 @@ import { Vector3Tuple } from 'three';
 import {
   generateRandomLozengeTiling,
   LozengeTiling,
+  LozengeTilingPeriods,
 } from '../../../core/generate';
 
 import { RootState } from '../../store';
@@ -23,11 +24,7 @@ export const generateSlice = createSlice({
       state,
       action: PayloadAction<{
         iterations: number;
-        periods: {
-          pX: number;
-          pY: number;
-          pZ: number;
-        };
+        periods: LozengeTilingPeriods;
       }>
     ) => {
       state.data = generateRandomLozengeTiling(action.payload);
@@ -40,11 +37,10 @@ export const selectVoxelPositions = (state: RootState) => {
   const { data } = state.generate;
 
   const vexels: Vector3Tuple[] = [];
-  for (let y = 0; y < data.length; y++) {
-    for (let x = 0; x < data[y].length; x++) {
-      for (let z = 0; z < data[y][x]; z++) {
-        // column height represented by number is rendered on y axis
-        vexels.push([x, z, y]);
+  for (let x = 0; x < data.length; x++) {
+    for (let y = 0; y < data[x].length; y++) {
+      for (let z = 0; z < data[x][y]; z++) {
+        vexels.push([x, y, z]);
       }
     }
   }

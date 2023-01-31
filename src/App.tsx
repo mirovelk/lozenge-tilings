@@ -6,9 +6,7 @@ import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel'
 import StyleProvider from './components/StyleProvider';
 import {
   iterationsUpdated,
-  pXUpdated,
-  pYUpdated,
-  pZUpdated,
+  periodUpdated,
   selectIsConfigValid,
   selectIterations,
   selectPeriods,
@@ -28,7 +26,7 @@ function App() {
   const dispatch = useAppDispatch();
 
   const iterations = useAppSelector(selectIterations);
-  const { pX, pY, pZ } = useAppSelector(selectPeriods);
+  const periods = useAppSelector(selectPeriods);
 
   const configValid = useAppSelector(selectIsConfigValid);
 
@@ -40,22 +38,22 @@ function App() {
   );
 
   const onPeriodXChange = useCallback(
-    (period: number) => {
-      dispatch(pXUpdated({ period }));
+    (xShift: number) => {
+      dispatch(periodUpdated({ xShift }));
     },
     [dispatch]
   );
 
   const onPeriodYChange = useCallback(
-    (period: number) => {
-      dispatch(pYUpdated({ period }));
+    (yShift: number) => {
+      dispatch(periodUpdated({ yShift }));
     },
     [dispatch]
   );
 
   const onPeriodZChange = useCallback(
-    (period: number) => {
-      dispatch(pZUpdated({ period }));
+    (zHeight: number) => {
+      dispatch(periodUpdated({ zHeight }));
     },
     [dispatch]
   );
@@ -64,15 +62,26 @@ function App() {
     dispatch(
       generate({
         iterations,
-        periods: { pX, pY, pZ },
+        periods,
       })
     );
-  }, [dispatch, iterations, pX, pY, pZ]);
+  }, [dispatch, iterations, periods]);
 
-  // auto generate on config change
+  const onConfigSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (configValid) {
+        generateTiling();
+      }
+    },
+    [configValid, generateTiling]
+  );
+
+  // auto generate on start
   useEffect(() => {
     generateTiling();
-  }, [generateTiling]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // only run once
 
   return (
     <StyleProvider>
@@ -84,54 +93,52 @@ function App() {
           flex-direction: column;
         `}
       >
-        <Panel
-          css={css`
-            margin-bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-          `}
-        >
-          <div
+        <form onSubmit={onConfigSubmit}>
+          <Panel
             css={css`
+              margin-bottom: 20px;
+              width: 100%;
               display: flex;
+              justify-content: space-between;
             `}
           >
-            <ConfigNumberInputWithLabel
-              label="Iterations:"
-              initialValue={iterations}
-              inputValueValid={(value) => value !== '' && Number(value) > 0}
-              onValidChange={onIterationsChange}
-            />
-            <ConfigNumberInputWithLabel
-              label="pX:"
-              initialValue={pX}
-              inputValueValid={isInputValueValidPeriod}
-              onValidChange={onPeriodXChange}
-            />
-            <ConfigNumberInputWithLabel
-              label="pY:"
-              initialValue={pY}
-              inputValueValid={isInputValueValidPeriod}
-              onValidChange={onPeriodYChange}
-            />
-            <ConfigNumberInputWithLabel
-              label="pZ:"
-              initialValue={pZ}
-              inputValueValid={isInputValueValidPeriod}
-              onValidChange={onPeriodZChange}
-            />
-          </div>
-          <div>
-            <Button
-              variant="contained"
-              onClick={generateTiling}
-              disabled={!configValid}
+            <div
+              css={css`
+                display: flex;
+              `}
             >
-              Generate
-            </Button>
-          </div>
-        </Panel>
+              <ConfigNumberInputWithLabel
+                label="Iterations:"
+                initialValue={iterations}
+                inputValueValid={(value) => value !== '' && Number(value) > 0}
+                onValidChange={onIterationsChange}
+              />
+              <ConfigNumberInputWithLabel
+                label="xShift:"
+                initialValue={periods.xShift}
+                inputValueValid={isInputValueValidPeriod}
+                onValidChange={onPeriodXChange}
+              />
+              <ConfigNumberInputWithLabel
+                label="yShift:"
+                initialValue={periods.yShift}
+                inputValueValid={isInputValueValidPeriod}
+                onValidChange={onPeriodYChange}
+              />
+              <ConfigNumberInputWithLabel
+                label="zHeight:"
+                initialValue={periods.zHeight}
+                inputValueValid={isInputValueValidPeriod}
+                onValidChange={onPeriodZChange}
+              />
+            </div>
+            <div>
+              <Button variant="contained" type="submit" disabled={!configValid}>
+                Generate
+              </Button>
+            </div>
+          </Panel>
+        </form>
         <Panel
           css={css`
             flex: 1 1 100%;
