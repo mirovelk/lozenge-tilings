@@ -14,6 +14,7 @@ export interface LozengeTilingPeriods {
 //   /
 //  x
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis)
+// periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 export type LozengeTiling = number[][];
 
 class IndexSafeLozengeTiling {
@@ -29,23 +30,27 @@ class IndexSafeLozengeTiling {
     this.zHeight = zHeight;
   }
 
-  get(x: number, y: number) {
+  getZ(x: number, y: number) {
     return this.data?.[x]?.[y] ?? 0;
   }
 
-  set(x: number, y: number, z: number) {
+  setZ(x: number, y: number, z: number) {
     if (!this.data[x]) {
       this.data[x] = [];
     }
     this.data[x][y] = z;
   }
 
-  xLength() {
+  lengthX() {
     return this.data.length;
   }
 
-  yLength(x: number) {
+  lengthY(x: number) {
     return this.data[x]?.length ?? 0;
+  }
+
+  isBox(x: number, y: number, z: number) {
+    return this.getZ(x, y) > z;
   }
 
   getData() {
@@ -53,31 +58,20 @@ class IndexSafeLozengeTiling {
   }
 }
 
-function containsBox(
-  tiles: IndexSafeLozengeTiling,
-  x: number,
-  y: number,
-  z: number
-) {
-  // TODO reflect periods
-
-  return tiles.get(x, y) > z;
-}
-
 function getPossibleNextTiles(
   tiles: IndexSafeLozengeTiling
 ): Array<[number, number]> {
   const possibleNextTiles: Array<[number, number]> = [];
 
-  // TODO reflect periods
-  for (let x = 0; x < tiles.xLength() + 1; x++) {
-    for (let y = 0; y < tiles.yLength(x) + 1; y++) {
-      const z = tiles.get(x, y);
+  // TODO +1 will not work well with periodicity
+  for (let x = 0; x < tiles.lengthX() + 1; x++) {
+    for (let y = 0; y < tiles.lengthY(x) + 1; y++) {
+      const z = tiles.getZ(x, y);
 
       if (
-        (x === 0 || containsBox(tiles, x - 1, y, z)) &&
-        (y === 0 || containsBox(tiles, x, y - 1, z)) &&
-        (z === 0 || containsBox(tiles, x, y, z - 1))
+        (x === 0 || tiles.isBox(x - 1, y, z)) &&
+        (y === 0 || tiles.isBox(x, y - 1, z)) &&
+        (z === 0 || tiles.isBox(x, y, z - 1))
       ) {
         possibleNextTiles.push([x, y]);
       }
@@ -98,9 +92,10 @@ export function generateRandomLozengeTiling({
   for (let i = 0; i < iterations; i++) {
     const possibleNextTiles = getPossibleNextTiles(lozengeTiling);
 
-    const [z, x] =
+    const [x, y] =
       possibleNextTiles[randomIntFromInterval(0, possibleNextTiles.length - 1)];
-    lozengeTiling.set(z, x, lozengeTiling.get(z, x) + 1);
+
+    lozengeTiling.setZ(x, y, lozengeTiling.getZ(x, y) + 1);
   }
 
   console.log('lozengeTiling.getData() :>> ', lozengeTiling.getData());
