@@ -70,9 +70,11 @@ function MainScene() {
     >
       <color attach="background" args={['#dfdfdf']} />
       <ambientLight color="#777777" />
-      <directionalLight position={[1, 0.75, 0.5]} />
+      <directionalLight
+        position={[helpersSize, helpersSize * 4, helpersSize * 2]}
+      />
       <gridHelper
-        args={[helpersSize, helpersSize / voxelSize]}
+        args={[helpersSize, helpersSize / voxelSize, '#777777', '#b1b1b1']}
         rotation={rotation}
       />
       <MergedVoxels positions={positions} color="#ff0000" />
