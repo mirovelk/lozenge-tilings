@@ -42,15 +42,17 @@ class IndexSafeLozengeTiling {
   }
 
   lengthX() {
-    return this.data.length;
+    // TODO +1 will not work well with periodicity
+    return this.data.length + 1;
   }
 
   lengthY(x: number) {
-    return this.data[x]?.length ?? 0;
+    // TODO +1 will not work well with periodicity
+    return (this.data[x]?.length ?? 0) + 1;
   }
 
   isBox(x: number, y: number, z: number) {
-    return this.getZ(x, y) > z;
+    return this.getZ(x, y) >= z;
   }
 
   getData() {
@@ -63,15 +65,14 @@ function getPossibleNextTiles(
 ): Array<[number, number]> {
   const possibleNextTiles: Array<[number, number]> = [];
 
-  // TODO +1 will not work well with periodicity
-  for (let x = 0; x < tiles.lengthX() + 1; x++) {
-    for (let y = 0; y < tiles.lengthY(x) + 1; y++) {
-      const z = tiles.getZ(x, y);
+  for (let x = 0; x < tiles.lengthX(); x++) {
+    for (let y = 0; y < tiles.lengthY(x); y++) {
+      const newZ = tiles.getZ(x, y) + 1; // add 1 to simulate potential box position
 
       if (
-        (x === 0 || tiles.isBox(x - 1, y, z)) &&
-        (y === 0 || tiles.isBox(x, y - 1, z)) &&
-        (z === 0 || tiles.isBox(x, y, z - 1))
+        (x === 0 || tiles.isBox(x - 1, y, newZ)) && // box behind left
+        (y === 0 || tiles.isBox(x, y - 1, newZ)) && // box behind right
+        (newZ === 0 || tiles.isBox(x, y, newZ - 1)) // box bottom
       ) {
         possibleNextTiles.push([x, y]);
       }
