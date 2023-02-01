@@ -1,19 +1,18 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Vector3Tuple } from 'three';
 import {
-  generateRandomLozengeTiling,
-  LozengeTiling,
+  generateRandomLozengeTilingVoxels,
   LozengeTilingPeriods,
-} from '../../../core/generate';
+} from '../../../core/lozengeTiling';
 
 import { RootState } from '../../store';
 
 interface GenerateState {
-  data: LozengeTiling;
+  voxels: Vector3Tuple[];
 }
 
 const initialState: GenerateState = {
-  data: [],
+  voxels: [],
 };
 
 export const generateSlice = createSlice({
@@ -27,25 +26,15 @@ export const generateSlice = createSlice({
         periods: LozengeTilingPeriods;
       }>
     ) => {
-      state.data = generateRandomLozengeTiling(action.payload);
+      state.voxels = generateRandomLozengeTilingVoxels(action.payload);
     },
   },
 });
 
 // Selectors
 export const selectVoxelPositions = (state: RootState) => {
-  const { data } = state.generate;
-
-  const vexels: Vector3Tuple[] = [];
-  for (let x = 0; x < data.length; x++) {
-    for (let y = 0; y < data[x].length; y++) {
-      for (let z = 0; z < data[x][y]; z++) {
-        vexels.push([x, y, z]);
-      }
-    }
-  }
-
-  return vexels;
+  const { voxels } = state.generate;
+  return voxels;
 };
 
 const { actions, reducer } = generateSlice;

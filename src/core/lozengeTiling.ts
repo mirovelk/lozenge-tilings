@@ -8,6 +8,8 @@ export interface LozengeTilingPeriods {
   zHeight: number;
 }
 
+type Voxel = [number, number, number];
+
 //    z
 //    |
 //    +-- y
@@ -15,14 +17,13 @@ export interface LozengeTilingPeriods {
 //  x
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis)
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
-export type LozengeTiling = number[][];
 
 class IndexSafeLozengeTiling {
   private xShift: number;
   private yShift: number;
   private zHeight: number;
 
-  private data: LozengeTiling = [];
+  private data: number[][] = [];
 
   constructor({ xShift, yShift, zHeight }: LozengeTilingPeriods) {
     this.xShift = xShift;
@@ -30,33 +31,77 @@ class IndexSafeLozengeTiling {
     this.zHeight = zHeight;
   }
 
-  getZ(x: number, y: number) {
+  public getZ(x: number, y: number) {
     return this.data?.[x]?.[y] ?? 0;
   }
 
-  setZ(x: number, y: number, z: number) {
+  public setZ(x: number, y: number, z: number) {
     if (!this.data[x]) {
       this.data[x] = [];
     }
     this.data[x][y] = z;
   }
 
-  lengthX() {
-    // TODO +1 will not work well with periodicity
-    return this.data.length + 1;
+  public lengthX() {
+    return this.xShift > 0 ? this.xShift : this.data.length + 1;
   }
 
-  lengthY(x: number) {
-    // TODO +1 will not work well with periodicity
-    return (this.data[x]?.length ?? 0) + 1;
+  public lengthY(x: number) {
+    return this.yShift > 0 ? this.yShift : (this.data[x]?.length ?? 0) + 1;
   }
 
-  isBox(x: number, y: number, z: number) {
-    return this.getZ(x, y) >= z;
+  public isBox(x: number, y: number, z: number) {
+    const [nx, ny, nz] = this.normalize(x, y, z);
+    return this.getZ(nx, ny) >= nz;
   }
 
-  getData() {
-    return this.data;
+  public getVoxels() {
+    const repetitions = 5;
+
+    const maxX = this.lengthX();
+    const maxY = Math.max(...this.data.map((row) => row.length));
+    const maxZ = Math.max(
+      ...this.data.map((row) => Math.max(...row.map((z) => z ?? 0)))
+    );
+
+    const xWidth = maxX * repetitions;
+    const yWidth = maxY * repetitions;
+    const zHeight = maxZ * repetitions;
+
+    const voxels: Voxel[] = [];
+
+    for (let x = 0; x < xWidth; x++) {
+      for (let y = 0; y < yWidth; y++) {
+        for (let z = 1; z < zHeight; z++) {
+          if (this.isBox(x, y, z)) {
+            voxels.push([x, y, z - 1]);
+          }
+        }
+      }
+    }
+
+    return voxels;
+  }
+
+  //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
+  private normalize(x: number, y: number, z: number) {
+    if (this.xShift === 0 && this.yShift === 0) {
+      return [x, y, z];
+    }
+    const shift =
+      this.xShift > 0
+        ? Math.floor(x / this.xShift)
+        : Math.floor(y / this.yShift);
+
+    return [
+      x - shift * this.xShift,
+      y - shift * this.yShift,
+      z + shift * this.zHeight,
+    ];
+  }
+
+  public logData() {
+    console.log(this.data);
   }
 }
 
@@ -81,13 +126,13 @@ function getPossibleNextTiles(
   return possibleNextTiles;
 }
 
-export function generateRandomLozengeTiling({
+export function generateRandomLozengeTilingVoxels({
   iterations,
   periods,
 }: {
   iterations: number;
   periods: LozengeTilingPeriods;
-}): LozengeTiling {
+}): Voxel[] {
   const lozengeTiling = new IndexSafeLozengeTiling(periods);
 
   for (let i = 0; i < iterations; i++) {
@@ -99,6 +144,7 @@ export function generateRandomLozengeTiling({
     lozengeTiling.setZ(x, y, lozengeTiling.getZ(x, y) + 1);
   }
 
-  console.log('lozengeTiling.getData() :>> ', lozengeTiling.getData());
-  return lozengeTiling.getData();
+  lozengeTiling.logData();
+
+  return lozengeTiling.getVoxels();
 }
