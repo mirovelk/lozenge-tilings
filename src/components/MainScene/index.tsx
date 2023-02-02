@@ -23,31 +23,17 @@ function alignToGrid(
   ];
 }
 
-function MergedVoxels({
-  positions,
+function Voxels({
+  geometry,
   color,
   ...props
 }: ThreeElements['mesh'] & {
-  positions: [number, number, number][];
   color: string;
 }) {
-  const geometry = useMemo(() => {
-    if (positions.length === 0) {
-      return new THREE.BufferGeometry();
-    }
-    const boxes = positions.map((position) => {
-      const box = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
-      box.translate(...alignToGrid(position));
-      return box;
-    });
-    const base = mergeBufferGeometries(boxes);
-    return base;
-  }, [positions]);
-
   return (
     <mesh {...props} geometry={geometry}>
       <meshStandardMaterial color={color} opacity={0.8} transparent />
-      {positions.length > 0 && <Edges geometry={geometry} />}
+      <Edges geometry={geometry} />
     </mesh>
   );
 }
@@ -56,7 +42,20 @@ const helpersSize = 10000;
 const rotation = new THREE.Euler(Math.PI / 2, 0, 0);
 
 function MainScene() {
-  const positions = useAppSelector(selectVoxelPositions);
+  const { voxels } = useAppSelector(selectVoxelPositions);
+
+  const geometry = useMemo(() => {
+    if (voxels.length === 0) {
+      return null;
+    }
+    const boxes = voxels.map((position) => {
+      const box = new THREE.BoxGeometry(voxelSize, voxelSize, voxelSize);
+      box.translate(...alignToGrid(position));
+      return box;
+    });
+    const base = mergeBufferGeometries(boxes);
+    return base;
+  }, [voxels]);
 
   return (
     <Canvas
@@ -77,7 +76,7 @@ function MainScene() {
         args={[helpersSize, helpersSize / voxelSize, '#777777', '#b1b1b1']}
         rotation={rotation}
       />
-      <MergedVoxels positions={positions} color="#ff0000" />
+      {geometry && <Voxels geometry={geometry} color="#ff0000" />}
       <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
         <GizmoViewport
           axisColors={['#9d4b4b', '#3b5b9d', '#2f7f4f']}

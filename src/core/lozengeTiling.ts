@@ -1,3 +1,4 @@
+import { Vector3Tuple } from 'three';
 function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -5,10 +6,8 @@ function randomIntFromInterval(min: number, max: number) {
 export interface LozengeTilingPeriods {
   xShift: number;
   yShift: number;
-  zHeight: number;
+  zHeight: number; // TODO rename to zShift
 }
-
-type Voxel = [number, number, number];
 
 //    z
 //    |
@@ -17,7 +16,6 @@ type Voxel = [number, number, number];
 //  x
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis)
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
-
 class IndexSafeLozengeTiling {
   private xShift: number;
   private yShift: number;
@@ -31,50 +29,78 @@ class IndexSafeLozengeTiling {
     this.zHeight = zHeight;
   }
 
-  public getZ(x: number, y: number) {
+  public getHeight(x: number, y: number) {
     return this.data?.[x]?.[y] ?? 0;
   }
 
-  public setZ(x: number, y: number, z: number) {
+  public incrementHeight(x: number, y: number) {
     if (!this.data[x]) {
       this.data[x] = [];
     }
-    this.data[x][y] = z;
-  }
-
-  public lengthX() {
-    return this.xShift > 0 ? this.xShift : this.data.length + 1;
-  }
-
-  public lengthY(x: number) {
-    return this.yShift > 0 ? this.yShift : (this.data[x]?.length ?? 0) + 1;
+    if (!this.data[x][y]) {
+      this.data[x][y] = 0;
+    }
+    this.data[x][y] += 1;
   }
 
   public isBox(x: number, y: number, z: number) {
     const [nx, ny, nz] = this.normalize(x, y, z);
-    return this.getZ(nx, ny) >= nz;
+    return this.getHeight(nx, ny) > nz; // TODO is this correct?
+  }
+
+  public getPossibleNextTiles(): Array<[number, number]> {
+    const possibleNextTiles: Array<[number, number]> = [];
+
+    for (
+      let x = 0;
+      x < (this.xShift > 0 ? this.xShift : this.data.length + 1);
+      x++
+    ) {
+      for (
+        let y = 0;
+        y < (this.yShift > 0 ? this.yShift : (this.data[x]?.length ?? 0) + 1);
+        y++
+      ) {
+        const newZ = this.getHeight(x, y); // height === 1 is z === 0 with a box
+
+        if (
+          (x === 0 || this.isBox(x - 1, y, newZ)) && // box behind left
+          (y === 0 || this.isBox(x, y - 1, newZ)) && // box behind right
+          (newZ === 0 || !this.isBox(x, y, newZ)) // NO box in tested position // TODO is this corect?
+        ) {
+          possibleNextTiles.push([x, y]);
+        }
+      }
+    }
+    return possibleNextTiles;
   }
 
   public getVoxels() {
-    const repetitions = 5;
+    const repetitions = 3;
 
-    const maxX = this.lengthX();
-    const maxY = Math.max(...this.data.map((row) => row.length));
-    const maxZ = Math.max(
-      ...this.data.map((row) => Math.max(...row.map((z) => z ?? 0)))
-    );
+    const maxX = this.xShift > 0 ? this.xShift : this.data.length;
+    const maxY =
+      this.yShift > 0
+        ? this.yShift
+        : Math.max(...this.data.map((row) => row.length));
+    const maxZ =
+      this.zHeight > 0
+        ? this.zHeight
+        : Math.max(
+            ...this.data.map((row) => Math.max(...row.map((z) => z ?? 0)))
+          );
 
     const xWidth = maxX * repetitions;
     const yWidth = maxY * repetitions;
     const zHeight = maxZ * repetitions;
 
-    const voxels: Voxel[] = [];
+    const voxels: Vector3Tuple[] = [];
 
     for (let x = 0; x < xWidth; x++) {
       for (let y = 0; y < yWidth; y++) {
-        for (let z = 1; z < zHeight; z++) {
+        for (let z = 0; z < zHeight; z++) {
           if (this.isBox(x, y, z)) {
-            voxels.push([x, y, z - 1]);
+            voxels.push([x, y, z]);
           }
         }
       }
@@ -83,65 +109,44 @@ class IndexSafeLozengeTiling {
     return voxels;
   }
 
-  //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
+  //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight) // TODO really "-zHeight"?
   private normalize(x: number, y: number, z: number) {
-    if (this.xShift === 0 && this.yShift === 0) {
-      return [x, y, z];
-    }
-    const shift =
-      this.xShift > 0
-        ? Math.floor(x / this.xShift)
-        : Math.floor(y / this.yShift);
+    const xShift = this.xShift > 0 ? Math.floor(x / this.xShift) : 0;
+    const yShift = this.yShift > 0 ? Math.floor(y / this.yShift) : 0;
+    const zHeight = this.zHeight > 0 ? Math.floor(z / this.zHeight) : 0;
 
     return [
-      x - shift * this.xShift,
-      y - shift * this.yShift,
-      z + shift * this.zHeight,
+      x - xShift * this.xShift,
+      y - yShift * this.yShift,
+      z - zHeight * this.zHeight, // TODO really "+"?
     ];
   }
 
   public logData() {
     console.log(this.data);
   }
-}
 
-function getPossibleNextTiles(
-  tiles: IndexSafeLozengeTiling
-): Array<[number, number]> {
-  const possibleNextTiles: Array<[number, number]> = [];
-
-  for (let x = 0; x < tiles.lengthX(); x++) {
-    for (let y = 0; y < tiles.lengthY(x); y++) {
-      const newZ = tiles.getZ(x, y) + 1; // add 1 to simulate potential box position
-
-      if (
-        (x === 0 || tiles.isBox(x - 1, y, newZ)) && // box behind left
-        (y === 0 || tiles.isBox(x, y - 1, newZ)) && // box behind right
-        (newZ === 0 || tiles.isBox(x, y, newZ - 1)) // box bottom
-      ) {
-        possibleNextTiles.push([x, y]);
-      }
-    }
+  public getData() {
+    return this.data;
   }
-  return possibleNextTiles;
 }
 
-export function generateRandomLozengeTilingVoxels({
+export function generateRandomLozengeTiling({
   iterations,
   periods,
 }: {
   iterations: number;
   periods: LozengeTilingPeriods;
-}): Voxel[] {
+}) {
   const lozengeTiling = new IndexSafeLozengeTiling(periods);
 
   for (let i = 0; i < iterations; i++) {
-    const possibleNextTiles = getPossibleNextTiles(lozengeTiling);
+    const possibleNextTiles = lozengeTiling.getPossibleNextTiles();
 
     const [x, y] =
       possibleNextTiles[randomIntFromInterval(0, possibleNextTiles.length - 1)];
 
-    lozengeTiling.setZ(x, y, lozengeTiling.getZ(x, y) + 1);
+    lozengeTiling.incrementHeight(x, y);
   }
 
   lozengeTiling.logData();

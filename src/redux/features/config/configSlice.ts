@@ -15,7 +15,7 @@ const initialState: ConfigState = {
     yShift: 0,
     zHeight: 0,
   },
-  interations: 10,
+  interations: 30,
   valid: true,
 };
 
