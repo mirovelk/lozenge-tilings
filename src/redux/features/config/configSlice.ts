@@ -11,11 +11,11 @@ interface ConfigState {
 
 const initialState: ConfigState = {
   periods: {
-    xShift: 0,
-    yShift: 0,
-    zHeight: 0,
+    xShift: 1,
+    yShift: 2,
+    zHeight: 2,
   },
-  interations: 30,
+  interations: 3,
   valid: true,
 };
 
