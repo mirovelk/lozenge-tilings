@@ -280,8 +280,8 @@ export class PeriodicLozengeTiling {
   private getVoxelBoundaries() {
     // TODO: calculate boundaries based on data or config
     return {
-      start: -10,
-      end: 10,
+      start: -50,
+      end: 50,
     };
   }
 

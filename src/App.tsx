@@ -190,7 +190,7 @@ function App() {
                   disabled={!markovChain}
                   onValidChange={onQChange}
                   inputProps={{
-                    step: '0.05',
+                    step: '0.001',
                     min: '0',
                     max: '1',
                   }}
