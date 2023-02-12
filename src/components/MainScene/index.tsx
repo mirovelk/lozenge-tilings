@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { Vector3Tuple } from 'three';
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
-import { selectVoxelPositions } from '../../redux/features/generate/generateSlice';
+import { selectVoxelPositions } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppSelector } from '../../redux/store';
 
 const voxelSize = 50;

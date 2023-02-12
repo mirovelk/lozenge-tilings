@@ -4,14 +4,18 @@ import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 
 import StyleProvider from './components/StyleProvider';
+
 import {
+  addRandomBox,
+  generate,
   iterationsUpdated,
   periodUpdated,
-  selectIsConfigValid,
+  selectCanAddBox,
+  selectCanGenerate,
+  selectCanRemoveBox,
   selectIterations,
   selectPeriods,
-} from './redux/features/config/configSlice';
-import { generate } from './redux/features/generate/generateSlice';
+} from './redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch, useAppSelector } from './redux/store';
 
 const Panel = styled(Paper)`
@@ -28,7 +32,9 @@ function App() {
   const iterations = useAppSelector(selectIterations);
   const periods = useAppSelector(selectPeriods);
 
-  const configValid = useAppSelector(selectIsConfigValid);
+  const canGenerate = useAppSelector(selectCanGenerate);
+  const canAddBox = useAppSelector(selectCanAddBox);
+  const canRemoveBox = useAppSelector(selectCanRemoveBox);
 
   const onIterationsChange = useCallback(
     (interations: number) => {
@@ -70,12 +76,18 @@ function App() {
   const onConfigSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (configValid) {
+      if (canGenerate) {
         generateTiling();
       }
     },
-    [configValid, generateTiling]
+    [canGenerate, generateTiling]
   );
+
+  const onAddBoxClick = useCallback(() => {
+    if (canAddBox) {
+      dispatch(addRandomBox());
+    }
+  }, [canAddBox, dispatch]);
 
   // auto generate on start
   useEffect(() => {
@@ -132,9 +144,33 @@ function App() {
                 onValidChange={onPeriodZChange}
               />
             </div>
-            <div>
-              <Button variant="contained" type="submit" disabled={!configValid}>
+            <div
+              css={css`
+                display: flex;
+              `}
+            >
+              <Button
+                variant="contained"
+                type="submit"
+                disabled={!canGenerate}
+                css={css`
+                  margin-right: 10px;
+                `}
+              >
                 Generate
+              </Button>
+              <Button
+                variant="outlined"
+                disabled={!canAddBox}
+                css={css`
+                  margin-right: 10px;
+                `}
+                onClick={onAddBoxClick}
+              >
+                +
+              </Button>
+              <Button variant="outlined" disabled={!canRemoveBox}>
+                -
               </Button>
             </div>
           </Panel>

@@ -45,6 +45,15 @@ class Vector3TupleSet {
   public getRandom(): Vector3Tuple {
     return this.arrList[randomIntFromInterval(0, this.arrList.length - 1)];
   }
+
+  public getAll(): Vector3Tuple[] {
+    return this.arrList;
+  }
+}
+
+export interface LozengeTiling {
+  data: number[][];
+  addableBoxes: Vector3Tuple[];
 }
 
 export interface LozengeTilingPeriods {
@@ -60,14 +69,31 @@ export interface LozengeTilingPeriods {
 //  x
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis), height -1 means no box in that column
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
-class IndexSafeLozengeTiling {
+export class PeriodicLozengeTiling {
   private xShift: number;
   private yShift: number;
   private zHeight: number;
 
   private data: number[][] = [];
-
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
+
+  constructor({ xShift, yShift, zHeight }: LozengeTilingPeriods) {
+    this.xShift = xShift;
+    this.yShift = yShift;
+    this.zHeight = zHeight;
+  }
+
+  public export(): LozengeTiling {
+    return {
+      data: this.data,
+      addableBoxes: this.addableBoxes.getAll(),
+    };
+  }
+
+  public import({ data, addableBoxes }: LozengeTiling) {
+    this.data = data;
+    this.addableBoxes = new Vector3TupleSet(addableBoxes);
+  }
 
   private addAddableBox(box: Vector3Tuple) {
     this.addableBoxes.add(box);
@@ -75,12 +101,6 @@ class IndexSafeLozengeTiling {
 
   private removeAddableBox(box: Vector3Tuple) {
     this.addableBoxes.remove(box);
-  }
-
-  constructor({ xShift, yShift, zHeight }: LozengeTilingPeriods) {
-    this.xShift = xShift;
-    this.yShift = yShift;
-    this.zHeight = zHeight;
   }
 
   private getHeight(x: number, y: number) {
@@ -235,26 +255,4 @@ class IndexSafeLozengeTiling {
   public getData() {
     return this.data;
   }
-}
-
-export function generateRandomLozengeTiling({
-  iterations,
-  periods,
-}: {
-  iterations: number;
-  periods: LozengeTilingPeriods;
-}) {
-  const lozengeTiling = new IndexSafeLozengeTiling(periods);
-
-  for (let i = 0; i < iterations; i++) {
-    const nextBox = lozengeTiling.getRandomAddableBox();
-    lozengeTiling.addBox(...nextBox);
-  }
-
-  lozengeTiling.logData();
-
-  return {
-    walls: lozengeTiling.getWallVoxels(),
-    boxes: lozengeTiling.getBoxVoxels(),
-  };
 }

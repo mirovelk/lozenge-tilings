@@ -1,6 +1,6 @@
 import { css, Input, Typography } from '@mui/material';
-import { useCallback, useState } from 'react';
-import { configValidated } from '../../redux/features/config/configSlice';
+import { useCallback, useEffect, useState } from 'react';
+import { configValidated } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch } from '../../redux/store';
 
 interface Props {
@@ -31,6 +31,11 @@ function ConfigNumberInputWithLabel({
     },
     [inputValueValid, dispatch, onValidChange]
   );
+
+  // update input value when initial value changes
+  useEffect(() => {
+    setInputValue(initialValue.toString());
+  }, [initialValue]);
 
   return (
     <div
