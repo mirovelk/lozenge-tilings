@@ -51,9 +51,9 @@ class Vector3TupleSet {
     return this.arrList;
   }
 
-  // public size(): number {
-  //   return this.arrList.length;
-  // }
+  public size(): number {
+    return this.arrList.length;
+  }
 }
 
 export interface LozengeTiling {
@@ -85,7 +85,7 @@ export class PeriodicLozengeTiling {
     this.periods = initialPeriods;
   }
 
-  public reset() {
+  private reset() {
     this.data = [];
     this.addableBoxes = new Vector3TupleSet([[0, 0, 0]]);
     this.removableBoxes = new Vector3TupleSet([]);
@@ -253,13 +253,13 @@ export class PeriodicLozengeTiling {
     }
   }
 
-  // public addableBoxesCount() {
-  //   return this.addableBoxes.size();
-  // }
+  private addableBoxesCount() {
+    return this.addableBoxes.size();
+  }
 
-  // public removableBoxesCount() {
-  //   return this.removableBoxes.size();
-  // }
+  private removableBoxesCount() {
+    return this.removableBoxes.size();
+  }
 
   public removeRandomBox() {
     const box = this.getRandomRemovableBox();
@@ -315,5 +315,29 @@ export class PeriodicLozengeTiling {
     ];
 
     return normalized;
+  }
+
+  public generateByAddingOnly(iterations: number) {
+    this.reset();
+    for (let i = 0; i < iterations; i++) {
+      this.addRandomBox();
+    }
+  }
+
+  public generateWithMarkovChain(iterations: number, q: number) {
+    this.reset();
+
+    for (let i = 0; i < iterations; i++) {
+      const rnd1 =
+        (Math.log(1 - Math.random()) * -1) / this.addableBoxesCount() / q;
+      const rnd2 =
+        (Math.log(1 - Math.random()) * -1) / this.removableBoxesCount();
+
+      if (rnd1 < rnd2) {
+        this.addRandomBox();
+      } else {
+        this.removeRandomBox();
+      }
+    }
   }
 }

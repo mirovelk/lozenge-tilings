@@ -1,5 +1,12 @@
-import { Button, Paper, css, styled } from '@mui/material';
-import { useCallback, useEffect } from 'react';
+import {
+  Button,
+  Paper,
+  css,
+  styled,
+  Checkbox,
+  FormControlLabel,
+} from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 
@@ -7,7 +14,8 @@ import StyleProvider from './components/StyleProvider';
 
 import {
   addRandomBox,
-  generate,
+  generateByAddingOnly,
+  generateWithMarkovChain,
   iterationsUpdated,
   periodUpdated,
   removeRandomBox,
@@ -32,6 +40,7 @@ function App() {
 
   const iterations = useAppSelector(selectIterations);
   const periods = useAppSelector(selectPeriods);
+  const [markovChain, setMarkovChain] = useState(true);
 
   const canGenerate = useAppSelector(selectCanGenerate);
   const canAddBox = useAppSelector(selectCanAddBox);
@@ -66,13 +75,12 @@ function App() {
   );
 
   const generateTiling = useCallback(() => {
-    dispatch(
-      generate({
-        iterations,
-        periods,
-      })
-    );
-  }, [dispatch, iterations, periods]);
+    if (markovChain) {
+      dispatch(generateWithMarkovChain());
+    } else {
+      dispatch(generateByAddingOnly());
+    }
+  }, [dispatch, markovChain]);
 
   const onConfigSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -117,72 +125,103 @@ function App() {
             css={css`
               margin-bottom: 20px;
               width: 100%;
-              display: flex;
-              justify-content: space-between;
             `}
           >
             <div
               css={css`
+                margin-bottom: 10px;
+                width: 100%;
                 display: flex;
+                justify-content: space-between;
               `}
             >
-              <ConfigNumberInputWithLabel
-                label="Iterations:"
-                initialValue={iterations}
-                inputValueValid={(value) => value !== '' && Number(value) > 0}
-                onValidChange={onIterationsChange}
-              />
-              <ConfigNumberInputWithLabel
-                label="xShift:"
-                initialValue={periods.xShift}
-                inputValueValid={isInputValueValidPeriod}
-                onValidChange={onPeriodXChange}
-              />
-              <ConfigNumberInputWithLabel
-                label="yShift:"
-                initialValue={periods.yShift}
-                inputValueValid={isInputValueValidPeriod}
-                onValidChange={onPeriodYChange}
-              />
-              <ConfigNumberInputWithLabel
-                label="zHeight:"
-                initialValue={periods.zHeight}
-                inputValueValid={isInputValueValidPeriod}
-                onValidChange={onPeriodZChange}
-              />
+              <div
+                css={css`
+                  display: flex;
+                `}
+              >
+                <ConfigNumberInputWithLabel
+                  label="Iterations:"
+                  initialValue={iterations}
+                  inputValueValid={(value) => value !== '' && Number(value) > 0}
+                  onValidChange={onIterationsChange}
+                />
+                <div
+                  css={css`
+                    margin-right: 10px;
+                    white-space: nowrap;
+                  `}
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={markovChain}
+                        onChange={() => setMarkovChain((prev) => !prev)}
+                      />
+                    }
+                    label="Markov Chain"
+                  />
+                </div>
+              </div>
+              <div>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  disabled={!canGenerate}
+                >
+                  Generate
+                </Button>
+              </div>
             </div>
             <div
               css={css`
                 display: flex;
+                justify-content: space-between;
               `}
             >
-              <Button
-                variant="contained"
-                type="submit"
-                disabled={!canGenerate}
+              <div
                 css={css`
-                  margin-right: 10px;
+                  display: flex;
                 `}
               >
-                Generate
-              </Button>
-              <Button
-                variant="outlined"
-                disabled={!canAddBox}
-                css={css`
-                  margin-right: 10px;
-                `}
-                onClick={onAddBoxClick}
-              >
-                +
-              </Button>
-              <Button
-                variant="outlined"
-                disabled={!canRemoveBox}
-                onClick={onRemoveBoxClick}
-              >
-                -
-              </Button>
+                <ConfigNumberInputWithLabel
+                  label="xShift:"
+                  initialValue={periods.xShift}
+                  inputValueValid={isInputValueValidPeriod}
+                  onValidChange={onPeriodXChange}
+                />
+                <ConfigNumberInputWithLabel
+                  label="yShift:"
+                  initialValue={periods.yShift}
+                  inputValueValid={isInputValueValidPeriod}
+                  onValidChange={onPeriodYChange}
+                />
+                <ConfigNumberInputWithLabel
+                  label="zHeight:"
+                  initialValue={periods.zHeight}
+                  inputValueValid={isInputValueValidPeriod}
+                  onValidChange={onPeriodZChange}
+                />
+              </div>
+              <div>
+                <Button
+                  variant="outlined"
+                  disabled={!canAddBox}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                  onClick={onAddBoxClick}
+                >
+                  +
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={!canRemoveBox}
+                  onClick={onRemoveBoxClick}
+                >
+                  -
+                </Button>
+              </div>
             </div>
           </Panel>
         </form>

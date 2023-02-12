@@ -10,6 +10,7 @@ import { RootState } from '../../store';
 interface LozengeTilingState {
   periods: LozengeTilingPeriods;
   iterations: number;
+  q: number;
   canGenerate: boolean;
   canAddBox: boolean;
   canRemoveBox: boolean;
@@ -23,7 +24,8 @@ const initialState: LozengeTilingState = {
     yShift: 2,
     zHeight: 2,
   },
-  iterations: 1,
+  iterations: 100,
+  q: 0.9, // input <0, 1>
   canGenerate: true,
   canAddBox: false,
   canRemoveBox: false,
@@ -58,38 +60,16 @@ export const lozengeTilingSlice = createSlice({
     configValidated: (state, action: PayloadAction<{ valid: boolean }>) => {
       state.canGenerate = action.payload.valid;
     },
-    generate: (
-      state,
-      action: PayloadAction<{
-        iterations: number;
-        periods: LozengeTilingPeriods;
-      }>
-    ) => {
-      const { iterations } = action.payload;
+    generateByAddingOnly: (state) => {
+      lozengeTiling.generateByAddingOnly(state.iterations);
 
-      lozengeTiling.reset();
-      for (let i = 0; i < iterations; i++) {
-        lozengeTiling.addRandomBox();
-      }
-
-      // // 2 random <0, 1)
-      // const q = 0.9; // input <0, 1>
-
-      // for (let i = 0; i < iterations; i++) {
-      //   const num1 =
-      //     (Math.log(1 - Math.random()) * -1) /
-      //     lozengeTiling.addableBoxesCount() /
-      //     q;
-      //   const num2 =
-      //     (Math.log(1 - Math.random()) * -1) /
-      //     lozengeTiling.removableBoxesCount();
-
-      //   if (num1 < num2) {
-      //     lozengeTiling.addRandomBox();
-      //   } else {
-      //     lozengeTiling.removeRandomBox();
-      //   }
-      // }
+      state.walls = lozengeTiling.getWallVoxels();
+      state.boxes = lozengeTiling.getBoxVoxels();
+      state.canAddBox = true;
+      state.canRemoveBox = true;
+    },
+    generateWithMarkovChain: (state) => {
+      lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
 
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
@@ -99,7 +79,6 @@ export const lozengeTilingSlice = createSlice({
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
 
-      state.iterations += 1;
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
     },
@@ -107,7 +86,6 @@ export const lozengeTilingSlice = createSlice({
       if (state.iterations > 1) {
         lozengeTiling.removeRandomBox();
 
-        state.iterations -= 1;
         state.walls = lozengeTiling.getWallVoxels();
         state.boxes = lozengeTiling.getBoxVoxels();
       } else {
@@ -151,7 +129,8 @@ export const selectVoxelPositions = (state: RootState) => {
 const { actions, reducer } = lozengeTilingSlice;
 
 export const {
-  generate,
+  generateByAddingOnly,
+  generateWithMarkovChain,
   periodUpdated,
   iterationsUpdated,
   configValidated,
