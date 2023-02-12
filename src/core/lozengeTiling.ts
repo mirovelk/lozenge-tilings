@@ -340,14 +340,18 @@ export class PeriodicLozengeTiling {
 
   public generateByAddingOnly(iterations: number) {
     this.reset();
+    const start = new Date().getTime();
     for (let i = 0; i < iterations; i++) {
       this.addRandomBox();
     }
+    const end = new Date().getTime();
+    console.log(`iterations: ${iterations}; duration: ${end - start}ms`);
   }
 
   public generateWithMarkovChain(iterations: number, q: number) {
     this.reset();
 
+    const start = new Date().getTime();
     for (let i = 0; i < iterations; i++) {
       const rnd1 =
         (Math.log(1 - Math.random()) * -1) / this.addableBoxesCount() / q;
@@ -360,5 +364,7 @@ export class PeriodicLozengeTiling {
         this.removeRandomBox();
       }
     }
+    const end = new Date().getTime();
+    console.log(`iterations: ${iterations}; duration: ${end - start}ms`);
   }
 }
