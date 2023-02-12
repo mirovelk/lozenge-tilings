@@ -28,6 +28,7 @@ import {
   selectQ,
 } from './redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch, useAppSelector } from './redux/store';
+import { Add, Remove } from '@mui/icons-material';
 
 const Panel = styled(Paper)`
   padding: 10px;
@@ -256,14 +257,14 @@ function App() {
                   `}
                   onClick={onAddBoxClick}
                 >
-                  +
+                  <Add />
                 </Button>
                 <Button
                   variant="outlined"
                   disabled={!canRemoveBox}
                   onClick={onRemoveBoxClick}
                 >
-                  -
+                  <Remove />
                 </Button>
               </div>
             </div>
