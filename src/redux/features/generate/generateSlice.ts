@@ -8,11 +8,13 @@ import {
 import { RootState } from '../../store';
 
 interface GenerateState {
-  voxels: Vector3Tuple[];
+  walls: Vector3Tuple[];
+  boxes: Vector3Tuple[];
 }
 
 const initialState: GenerateState = {
-  voxels: [],
+  walls: [],
+  boxes: [],
 };
 
 export const generateSlice = createSlice({
@@ -26,15 +28,17 @@ export const generateSlice = createSlice({
         periods: LozengeTilingPeriods;
       }>
     ) => {
-      state.voxels = generateRandomLozengeTiling(action.payload);
+      const { walls, boxes } = generateRandomLozengeTiling(action.payload);
+      state.walls = walls;
+      state.boxes = boxes;
     },
   },
 });
 
 // Selectors
 export const selectVoxelPositions = (state: RootState) => {
-  const { voxels } = state.generate;
-  return { voxels };
+  const { walls, boxes } = state.generate;
+  return { walls, boxes };
 };
 
 const { actions, reducer } = generateSlice;

@@ -3,6 +3,50 @@ function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+class Vector3TupleSet {
+  private arrList: Vector3Tuple[] = [];
+
+  constructor(arrList: Vector3Tuple[] = []) {
+    this.arrList.push(...arrList);
+  }
+
+  private arraysEqual(a: Vector3Tuple, b: Vector3Tuple) {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
+  public has(arr: Vector3Tuple): boolean {
+    for (let i = 0; i < this.arrList.length; i++) {
+      if (this.arraysEqual(this.arrList[i], arr)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public add(arr: Vector3Tuple): void {
+    if (!this.has(arr)) {
+      this.arrList.push(arr);
+    }
+  }
+
+  public remove(arr: Vector3Tuple): boolean {
+    for (let i = 0; i < this.arrList.length; i++) {
+      if (this.arraysEqual(this.arrList[i], arr)) {
+        this.arrList.splice(i, 1);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public getRandom(): Vector3Tuple {
+    return this.arrList[randomIntFromInterval(0, this.arrList.length - 1)];
+  }
+}
+
 export interface LozengeTilingPeriods {
   xShift: number;
   yShift: number;
@@ -14,7 +58,7 @@ export interface LozengeTilingPeriods {
 //    +-- y
 //   /
 //  x
-// 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis)
+// 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis), height -1 means no box in that column
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 class IndexSafeLozengeTiling {
   private xShift: number;
@@ -23,16 +67,14 @@ class IndexSafeLozengeTiling {
 
   private data: number[][] = [];
 
-  public addableBoxes: Vector3Tuple[] = [[0, 0, 0]]; // TODO private + getter or move gneration inside this class
+  private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
 
-  // TODO use Set instead of array?
-  private addAddableBoxNotInAddableBoxes(x: number, y: number, z: number) {
-    if (
-      this.addableBoxes.some(([bx, by, bz]) => bx === x && by === y && bz === z)
-    ) {
-      return;
-    }
-    this.addableBoxes.push([x, y, z]);
+  private addAddableBox(box: Vector3Tuple) {
+    this.addableBoxes.add(box);
+  }
+
+  private removeAddableBox(box: Vector3Tuple) {
+    this.addableBoxes.remove(box);
   }
 
   constructor({ xShift, yShift, zHeight }: LozengeTilingPeriods) {
@@ -41,45 +83,60 @@ class IndexSafeLozengeTiling {
     this.zHeight = zHeight;
   }
 
-  public getHeight(x: number, y: number) {
+  private getHeight(x: number, y: number) {
     return this.data?.[x]?.[y] ?? -1;
   }
 
-  public incrementHeight(x: number, y: number) {
+  private initializeHeight(x: number, y: number) {
     if (this.data.length < x + 1) {
       this.data[x] = [];
     }
     if (this.data[x].length < y + 1) {
       this.data[x][y] = -1;
     }
+  }
+
+  private incrementHeight(x: number, y: number) {
+    this.initializeHeight(x, y);
     this.data[x][y] += 1;
   }
 
-  public isBox(x: number, y: number, z: number) {
+  private decrementHeight(x: number, y: number) {
+    this.initializeHeight(x, y);
+    this.data[x][y] -= 1;
+  }
+
+  private isWall(x: number, y: number, z: number) {
     const [nx, ny, nz] = this.normalize(x, y, z);
-    if (nx < 0) {
-      return true;
-    }
-    return this.getHeight(nx, ny) >= nz;
+    return nx < 0 || ny < 0 || nz < 0;
+  }
+
+  private isBox(x: number, y: number, z: number) {
+    const [nx, ny, nz] = this.normalize(x, y, z);
+    return !this.isWall(x, y, z) && this.getHeight(nx, ny) >= nz;
+  }
+
+  public isWallOrBox(x: number, y: number, z: number) {
+    return this.isWall(x, y, z) || this.isBox(x, y, z);
   }
 
   private canAddBox(x: number, y: number, z: number) {
     return (
-      // looking from y
-      this.isBox(x - 1, y, z) && // box right
-      this.isBox(x, y - 1, z) && // box behind
-      this.isBox(x, y, z - 1) && // box below
-      !this.isBox(x, y, z) // NO box in tested position
+      !this.isWallOrBox(x, y, z) && // no box in tested position
+      // looking from +y
+      this.isWallOrBox(x - 1, y, z) && // box or wall to left
+      this.isWallOrBox(x, y - 1, z) && // box or wall behind
+      this.isWallOrBox(x, y, z - 1) // box or wall below
     );
   }
 
   private canRemoveBox(x: number, y: number, z: number) {
     return (
-      // looking from y
-      !this.isBox(x + 1, y, z) && // box left
-      !this.isBox(x, y + 1, z) && // box in front
-      !this.isBox(x, y, z + 1) && // box above
-      this.isBox(x, y, z) // box in tested position
+      this.isBox(x, y, z) && // box in tested position
+      // looking from +y
+      !this.isBox(x + 1, y, z) && // no box to right
+      !this.isBox(x, y + 1, z) && // no box in front
+      !this.isBox(x, y, z + 1) // no box above
     );
   }
 
@@ -87,23 +144,19 @@ class IndexSafeLozengeTiling {
     if (this.canAddBox(x, y, z)) {
       const [nx, ny, nz] = this.normalize(x, y, z);
 
+      // add box
       this.incrementHeight(nx, ny);
+      this.removeAddableBox([nx, ny, nz]); // just added, can't be added again
 
-      this.addableBoxes = this.addableBoxes.filter(
-        ([bx, by, bz]) => !(bx === nx && by === ny && bz === nz)
-      );
-
+      // update addable boxes
       if (this.canAddBox(nx + 1, ny, nz)) {
-        const [nnx, nny, nnz] = this.normalize(x + 1, y, z);
-        this.addAddableBoxNotInAddableBoxes(nnx, nny, nnz);
+        this.addAddableBox(this.normalize(x + 1, y, z));
       }
       if (this.canAddBox(nx, ny + 1, nz)) {
-        const [nnx, nny, nnz] = this.normalize(x, y + 1, z);
-        this.addAddableBoxNotInAddableBoxes(nnx, nny, nnz);
+        this.addAddableBox(this.normalize(x, y + 1, z));
       }
       if (this.canAddBox(nx, ny, nz + 1)) {
-        const [nnx, nny, nnz] = this.normalize(x, y, z + 1);
-        this.addAddableBoxNotInAddableBoxes(nnx, nny, nnz);
+        this.addAddableBox(this.normalize(x, y, z + 1));
       }
     }
   }
@@ -112,36 +165,36 @@ class IndexSafeLozengeTiling {
     if (this.canRemoveBox(x, y, z)) {
       const [nx, ny, nz] = this.normalize(x, y, z);
 
-      this.data[nx][ny] -= 1;
-      this.addAddableBoxNotInAddableBoxes(nx, ny, nz);
+      // remove box
+      this.decrementHeight(nx, ny);
+      this.addAddableBox([nx, ny, nz]); // just removed, can be added again
 
-      let [nnx, nny, nnz] = this.normalize(x + 1, y, z);
-      this.addableBoxes = this.addableBoxes.filter(([bx, by, bz]) => {
-        return bx !== nnx || by !== nny || bz !== nnz;
-      });
-
-      [nnx, nny, nnz] = this.normalize(x, y + 1, z);
-      this.addableBoxes = this.addableBoxes.filter(([bx, by, bz]) => {
-        return bx !== nnx || by !== nny || bz !== nnz;
-      });
-
-      [nnx, nny, nnz] = this.normalize(x, y, z + 1);
-      this.addableBoxes = this.addableBoxes.filter(([bx, by, bz]) => {
-        return bx !== nnx || by !== nny || bz !== nnz;
-      });
+      // update addable boxes
+      this.addableBoxes.remove(this.normalize(x + 1, y, z));
+      this.addableBoxes.remove(this.normalize(x, y + 1, z));
+      this.addableBoxes.remove(this.normalize(x, y, z + 1));
     }
   }
 
-  public getVoxels() {
-    // TODO add function to just go through ranges + function to detect the range
+  public getRandomAddableBox() {
+    return this.addableBoxes.getRandom();
+  }
+
+  private getVoxelBoundaries() {
+    return {
+      start: -10,
+      end: 10,
+    };
+  }
+
+  private getVoxels(match: (x: number, y: number, z: number) => boolean) {
     const voxels: Vector3Tuple[] = [];
-    const start = -10;
-    const end = 10;
+    const { start, end } = this.getVoxelBoundaries();
 
     for (let x = start; x < end; x++) {
       for (let y = start; y < end; y++) {
         for (let z = start; z < end; z++) {
-          if (this.isBox(x, y, z)) {
+          if (match(x, y, z)) {
             voxels.push([x, y, z]);
           }
         }
@@ -151,18 +204,28 @@ class IndexSafeLozengeTiling {
     return voxels;
   }
 
+  public getWallVoxels() {
+    return this.getVoxels(this.isWall.bind(this));
+  }
+
+  public getBoxVoxels() {
+    return this.getVoxels(this.isBox.bind(this));
+  }
+
   //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
-  private normalize(x: number, y: number, z: number) {
+  private normalize(x: number, y: number, z: number): Vector3Tuple {
     // yShift < xShift, yShift !== 0
-    // xShift !== 0 && yShift !=== 0 // aspon 1 nenulovy
+    // xShift !== 0 || yShift !=== 0 // aspon 1 nenulovy
     // (y div yShift)
     const shift = Math.floor(y / this.yShift);
 
-    return [
+    const normalized: Vector3Tuple = [
       x - shift * this.xShift,
       y - shift * this.yShift,
       z + shift * this.zHeight,
     ];
+
+    return normalized;
   }
 
   public logData() {
@@ -184,15 +247,14 @@ export function generateRandomLozengeTiling({
   const lozengeTiling = new IndexSafeLozengeTiling(periods);
 
   for (let i = 0; i < iterations; i++) {
-    const nextBoxIndex = randomIntFromInterval(
-      0,
-      lozengeTiling.addableBoxes.length - 1
-    );
-    const [x, y, z] = lozengeTiling.addableBoxes[nextBoxIndex];
-    lozengeTiling.addBox(x, y, z);
+    const nextBox = lozengeTiling.getRandomAddableBox();
+    lozengeTiling.addBox(...nextBox);
   }
 
   lozengeTiling.logData();
 
-  return lozengeTiling.getVoxels();
+  return {
+    walls: lozengeTiling.getWallVoxels(),
+    boxes: lozengeTiling.getBoxVoxels(),
+  };
 }
