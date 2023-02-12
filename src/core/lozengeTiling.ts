@@ -196,11 +196,19 @@ export class PeriodicLozengeTiling {
     }
   }
 
-  public getRandomAddableBox() {
+  private getRandomAddableBox() {
     return this.addableBoxes.getRandom();
   }
 
+  public addRandomBox() {
+    const box = this.getRandomAddableBox();
+    if (box) {
+      this.addBox(...box);
+    }
+  }
+
   private getVoxelBoundaries() {
+    // TODO: calculate boundaries based on data or config
     return {
       start: -10,
       end: 10,
@@ -250,9 +258,5 @@ export class PeriodicLozengeTiling {
 
   public logData() {
     console.log(this.data);
-  }
-
-  public getData() {
-    return this.data;
   }
 }

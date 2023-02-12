@@ -72,8 +72,7 @@ export const lozengeTilingSlice = createSlice({
       const lozengeTiling = new PeriodicLozengeTiling(periods);
 
       for (let i = 0; i < iterations; i++) {
-        const nextBox = lozengeTiling.getRandomAddableBox();
-        lozengeTiling.addBox(...nextBox);
+        lozengeTiling.addRandomBox();
       }
 
       state.tilingData = lozengeTiling.export();
@@ -88,8 +87,7 @@ export const lozengeTilingSlice = createSlice({
       const lozengeTiling = new PeriodicLozengeTiling(periods);
       lozengeTiling.import(tilingData);
 
-      const nextBox = lozengeTiling.getRandomAddableBox();
-      lozengeTiling.addBox(...nextBox);
+      lozengeTiling.addRandomBox();
 
       state.interations += 1;
       state.walls = lozengeTiling.getWallVoxels();
