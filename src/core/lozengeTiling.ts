@@ -310,6 +310,13 @@ export class PeriodicLozengeTiling {
     return this.getVoxels(this.isBox.bind(this));
   }
 
+  public getPeriodBoxCount() {
+    const total = this.data.reduce((acc, row) => {
+      return acc + row.reduce((acc, height) => acc + height + 1, 0);
+    }, 0);
+    return total;
+  }
+
   //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
   private normalize(x: number, y: number, z: number): Vector3Tuple {
     if (this.periods.xShift === 0 && this.periods.yShift === 0) {

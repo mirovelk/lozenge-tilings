@@ -1,3 +1,5 @@
+import { css } from '@emotion/react';
+import { Paper } from '@mui/material';
 import {
   Edges,
   GizmoHelper,
@@ -9,7 +11,10 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import { Vector3Tuple } from 'three';
 import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils';
-import { selectVoxelPositions } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
+import {
+  selectPeriodBoxCount,
+  selectVoxelPositions,
+} from '../../redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppSelector } from '../../redux/store';
 
 const voxelSize = 50;
@@ -141,6 +146,8 @@ function mergeVoxels(voxels: Vector3Tuple[]) {
 function MainScene() {
   const { walls, boxes } = useAppSelector(selectVoxelPositions);
 
+  const totalBoxCount = useAppSelector(selectPeriodBoxCount);
+
   const wallsGeometry = useMemo(() => {
     return mergeVoxels(walls);
   }, [walls]);
@@ -150,44 +157,68 @@ function MainScene() {
   }, [boxes]);
 
   return (
-    <Canvas
-      camera={{
-        position: [helpersSize * 2, helpersSize, helpersSize],
-        near: 0.1,
-        far: helpersSize * 4,
-        up: [0, 0, 1],
-        zoom: 0.4,
-      }}
-      orthographic
+    <div
+      css={css`
+        position: relative;
+        height: 100%;
+      `}
     >
-      <color attach="background" args={['#dfdfdf']} />
-      <ambientLight color="#777777" />
-      <directionalLight
-        position={[helpersSize, helpersSize * 4, helpersSize * 2]}
-      />
-      {/* <gridHelper
+      <Canvas
+        camera={{
+          position: [helpersSize * 2, helpersSize, helpersSize],
+          near: 0.1,
+          far: helpersSize * 4,
+          up: [0, 0, 1],
+          zoom: 0.4,
+        }}
+        orthographic
+      >
+        <color attach="background" args={['#dfdfdf']} />
+        <ambientLight color="#777777" />
+        <directionalLight
+          position={[helpersSize, helpersSize * 4, helpersSize * 2]}
+        />
+        {/* <gridHelper
         args={[helpersSize, helpersSize / voxelSize, '#777777', '#b1b1b1']}
         rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
       /> */}
-      {wallsGeometry && (
-        <Voxels geometry={wallsGeometry} color="#328cf9" withEdges />
-      )}
-      {boxesGeometry && (
-        <Voxels
-          geometry={boxesGeometry}
-          color="#ff0000"
-          withEdges
-          transparent={true}
-        />
-      )}
-      <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
-        <GizmoViewport
-          axisColors={['#9d4b4b', '#3b5b9d', '#2f7f4f']}
-          labelColor="white"
-        />
-      </GizmoHelper>
-      <OrbitControls makeDefault />
-    </Canvas>
+        {wallsGeometry && (
+          <Voxels geometry={wallsGeometry} color="#328cf9" withEdges />
+        )}
+        {boxesGeometry && (
+          <Voxels
+            geometry={boxesGeometry}
+            color="#ff0000"
+            withEdges
+            transparent={true}
+          />
+        )}
+        <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+          <GizmoViewport
+            axisColors={['#9d4b4b', '#3b5b9d', '#2f7f4f']}
+            labelColor="white"
+          />
+        </GizmoHelper>
+        <OrbitControls makeDefault />
+      </Canvas>
+      <div
+        css={css`
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+        `}
+      >
+        <Paper
+          css={css`
+            padding: 10px;
+          `}
+        >
+          <>
+            Box count: {totalBoxCount} / {boxes.length}
+          </>
+        </Paper>
+      </div>
+    </div>
   );
 }
 

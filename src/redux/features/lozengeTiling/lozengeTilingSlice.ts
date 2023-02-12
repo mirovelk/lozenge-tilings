@@ -136,6 +136,10 @@ export const selectVoxelPositions = (state: RootState) => {
   return { walls, boxes };
 };
 
+export const selectPeriodBoxCount = () => {
+  return lozengeTiling.getPeriodBoxCount();
+};
+
 const { actions, reducer } = lozengeTilingSlice;
 
 export const {
