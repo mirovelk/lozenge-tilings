@@ -1,4 +1,5 @@
 import { Vector3Tuple } from 'three';
+
 function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -49,17 +50,22 @@ class Vector3TupleSet {
   public getAll(): Vector3Tuple[] {
     return this.arrList;
   }
+
+  // public size(): number {
+  //   return this.arrList.length;
+  // }
 }
 
 export interface LozengeTiling {
   data: number[][];
   addableBoxes: Vector3Tuple[];
+  removableBoxes: Vector3Tuple[];
 }
 
 export interface LozengeTilingPeriods {
   xShift: number;
   yShift: number;
-  zHeight: number; // TODO rename to zShift
+  zHeight: number;
 }
 
 //    z
@@ -70,37 +76,41 @@ export interface LozengeTilingPeriods {
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis), height -1 means no box in that column
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 export class PeriodicLozengeTiling {
-  private xShift: number;
-  private yShift: number;
-  private zHeight: number;
-
   private data: number[][] = [];
+  private periods: LozengeTilingPeriods;
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
+  private removableBoxes: Vector3TupleSet = new Vector3TupleSet([]);
 
-  constructor({ xShift, yShift, zHeight }: LozengeTilingPeriods) {
-    this.xShift = xShift;
-    this.yShift = yShift;
-    this.zHeight = zHeight;
+  constructor(initialPeriods: LozengeTilingPeriods) {
+    this.periods = initialPeriods;
   }
 
-  public export(): LozengeTiling {
-    return {
-      data: this.data,
-      addableBoxes: this.addableBoxes.getAll(),
-    };
+  public reset() {
+    this.data = [];
+    this.addableBoxes = new Vector3TupleSet([[0, 0, 0]]);
+    this.removableBoxes = new Vector3TupleSet([]);
   }
 
-  public import({ data, addableBoxes }: LozengeTiling) {
-    this.data = data;
-    this.addableBoxes = new Vector3TupleSet(addableBoxes);
+  public setPeriods(periods: Partial<LozengeTilingPeriods>) {
+    this.periods = { ...this.periods, ...periods };
+    // reset other data, no longer valid with new periods
+    this.reset();
   }
 
   private addAddableBox(box: Vector3Tuple) {
-    this.addableBoxes.add(box);
+    this.addableBoxes.add(this.normalize(...box));
   }
 
   private removeAddableBox(box: Vector3Tuple) {
-    this.addableBoxes.remove(box);
+    this.addableBoxes.remove(this.normalize(...box));
+  }
+
+  private addRemovableBox(box: Vector3Tuple) {
+    this.removableBoxes.add(this.normalize(...box));
+  }
+
+  private removeRemovableBox(box: Vector3Tuple) {
+    this.removableBoxes.remove(this.normalize(...box));
   }
 
   private getHeight(x: number, y: number) {
@@ -166,17 +176,30 @@ export class PeriodicLozengeTiling {
 
       // add box
       this.incrementHeight(nx, ny);
-      this.removeAddableBox([nx, ny, nz]); // just added, can't be added again
+      // just added box
+      this.removeAddableBox([nx, ny, nz]); // can't be added again
+      this.addRemovableBox([nx, ny, nz]); // can be removed
 
       // update addable boxes
       if (this.canAddBox(nx + 1, ny, nz)) {
-        this.addAddableBox(this.normalize(x + 1, y, z));
+        this.addAddableBox([x + 1, y, z]);
       }
       if (this.canAddBox(nx, ny + 1, nz)) {
-        this.addAddableBox(this.normalize(x, y + 1, z));
+        this.addAddableBox([x, y + 1, z]);
       }
       if (this.canAddBox(nx, ny, nz + 1)) {
-        this.addAddableBox(this.normalize(x, y, z + 1));
+        this.addAddableBox([x, y, z + 1]);
+      }
+
+      // update removable boxes
+      if (!this.canRemoveBox(x - 1, y, z)) {
+        this.removeRemovableBox([x - 1, y, z]);
+      }
+      if (!this.canRemoveBox(x, y - 1, z)) {
+        this.removeRemovableBox([x, y - 1, z]);
+      }
+      if (!this.canRemoveBox(x, y, z - 1)) {
+        this.removeRemovableBox([x, y, z - 1]);
       }
     }
   }
@@ -187,12 +210,31 @@ export class PeriodicLozengeTiling {
 
       // remove box
       this.decrementHeight(nx, ny);
-      this.addAddableBox([nx, ny, nz]); // just removed, can be added again
+      // just removed box
+      this.addAddableBox([nx, ny, nz]); // can be added again
+      this.removeRemovableBox([nx, ny, nz]); // can't be removed again
 
       // update addable boxes
-      this.addableBoxes.remove(this.normalize(x + 1, y, z));
-      this.addableBoxes.remove(this.normalize(x, y + 1, z));
-      this.addableBoxes.remove(this.normalize(x, y, z + 1));
+      if (!this.canAddBox(nx + 1, ny, nz)) {
+        this.removeAddableBox([x + 1, y, z]);
+      }
+      if (!this.canAddBox(nx, ny + 1, nz)) {
+        this.removeAddableBox([x, y + 1, z]);
+      }
+      if (!this.canAddBox(nx, ny, nz + 1)) {
+        this.removeAddableBox([x, y, z + 1]);
+      }
+
+      // update removable boxes
+      if (this.canRemoveBox(x - 1, y, z)) {
+        this.addRemovableBox([x - 1, y, z]);
+      }
+      if (this.canRemoveBox(x, y - 1, z)) {
+        this.addRemovableBox([x, y - 1, z]);
+      }
+      if (this.canRemoveBox(x, y, z - 1)) {
+        this.addRemovableBox([x, y, z - 1]);
+      }
     }
   }
 
@@ -200,10 +242,29 @@ export class PeriodicLozengeTiling {
     return this.addableBoxes.getRandom();
   }
 
+  private getRandomRemovableBox() {
+    return this.removableBoxes.getRandom();
+  }
+
   public addRandomBox() {
     const box = this.getRandomAddableBox();
     if (box) {
       this.addBox(...box);
+    }
+  }
+
+  // public addableBoxesCount() {
+  //   return this.addableBoxes.size();
+  // }
+
+  // public removableBoxesCount() {
+  //   return this.removableBoxes.size();
+  // }
+
+  public removeRandomBox() {
+    const box = this.getRandomRemovableBox();
+    if (box) {
+      this.removeBox(...box);
     }
   }
 
@@ -245,18 +306,14 @@ export class PeriodicLozengeTiling {
     // yShift < xShift, yShift !== 0
     // xShift !== 0 || yShift !=== 0 // aspon 1 nenulovy
     // (y div yShift)
-    const shift = Math.floor(y / this.yShift);
+    const shift = Math.floor(y / this.periods.yShift);
 
     const normalized: Vector3Tuple = [
-      x - shift * this.xShift,
-      y - shift * this.yShift,
-      z + shift * this.zHeight,
+      x - shift * this.periods.xShift,
+      y - shift * this.periods.yShift,
+      z + shift * this.periods.zHeight,
     ];
 
     return normalized;
-  }
-
-  public logData() {
-    console.log(this.data);
   }
 }

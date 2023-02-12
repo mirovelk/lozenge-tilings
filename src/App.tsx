@@ -10,6 +10,7 @@ import {
   generate,
   iterationsUpdated,
   periodUpdated,
+  removeRandomBox,
   selectCanAddBox,
   selectCanGenerate,
   selectCanRemoveBox,
@@ -88,6 +89,12 @@ function App() {
       dispatch(addRandomBox());
     }
   }, [canAddBox, dispatch]);
+
+  const onRemoveBoxClick = useCallback(() => {
+    if (canRemoveBox) {
+      dispatch(removeRandomBox());
+    }
+  }, [canRemoveBox, dispatch]);
 
   // auto generate on start
   useEffect(() => {
@@ -169,7 +176,11 @@ function App() {
               >
                 +
               </Button>
-              <Button variant="outlined" disabled={!canRemoveBox}>
+              <Button
+                variant="outlined"
+                disabled={!canRemoveBox}
+                onClick={onRemoveBoxClick}
+              >
                 -
               </Button>
             </div>
