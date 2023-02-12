@@ -152,10 +152,11 @@ function MainScene() {
   return (
     <Canvas
       camera={{
-        position: [helpersSize, helpersSize, helpersSize],
+        position: [helpersSize * 2, helpersSize, helpersSize],
         near: 0.1,
         far: helpersSize * 4,
         up: [0, 0, 1],
+        zoom: 0.4,
       }}
       orthographic
     >
