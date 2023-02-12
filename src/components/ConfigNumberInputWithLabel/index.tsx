@@ -1,4 +1,4 @@
-import { css, Input, Typography } from '@mui/material';
+import { css, Input, InputProps, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { configValidated } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch } from '../../redux/store';
@@ -6,6 +6,7 @@ import { useAppDispatch } from '../../redux/store';
 interface Props {
   label: string;
   initialValue: number;
+  disabled?: boolean;
   inputValueValid: (value: string) => boolean;
   onValidChange: (value: number) => void;
 }
@@ -15,7 +16,8 @@ function ConfigNumberInputWithLabel({
   initialValue,
   inputValueValid,
   onValidChange,
-}: Props) {
+  ...props
+}: Props & InputProps) {
   const dispatch = useAppDispatch();
   const [inputValue, setInputValue] = useState<string>(initialValue.toString());
 
@@ -62,6 +64,7 @@ function ConfigNumberInputWithLabel({
         css={css`
           margin-right: 10px;
         `}
+        {...props}
       />
     </div>
   );

@@ -49,6 +49,11 @@ export const lozengeTilingSlice = createSlice({
       state.canRemoveBox = false;
       lozengeTiling.setPeriods(state.periods);
     },
+    qUpdated: (state, action: PayloadAction<{ q: number }>) => {
+      state.q = action.payload.q;
+      state.canAddBox = false;
+      state.canRemoveBox = false;
+    },
     iterationsUpdated: (
       state,
       action: PayloadAction<{ interations: number }>
@@ -101,6 +106,11 @@ export const selectPeriods = (state: RootState) => {
   return periods;
 };
 
+export const selectQ = (state: RootState) => {
+  const { q } = state.lozengeTiling;
+  return q;
+};
+
 export const selectIterations = (state: RootState) => {
   const { iterations } = state.lozengeTiling;
   return iterations;
@@ -136,6 +146,7 @@ export const {
   configValidated,
   addRandomBox,
   removeRandomBox,
+  qUpdated,
 } = actions;
 
 export default reducer;

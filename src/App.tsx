@@ -18,12 +18,14 @@ import {
   generateWithMarkovChain,
   iterationsUpdated,
   periodUpdated,
+  qUpdated,
   removeRandomBox,
   selectCanAddBox,
   selectCanGenerate,
   selectCanRemoveBox,
   selectIterations,
   selectPeriods,
+  selectQ,
 } from './redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch, useAppSelector } from './redux/store';
 
@@ -31,8 +33,16 @@ const Panel = styled(Paper)`
   padding: 10px;
 `;
 
+function isInputValueValidIterations(value: string) {
+  return value !== '' && Number(value) >= 0 && Number.isInteger(Number(value));
+}
+
 function isInputValueValidPeriod(value: string) {
-  return value !== '' && Number(value) >= 0;
+  return value !== '' && Number(value) >= 0 && Number.isInteger(Number(value));
+}
+
+function isInputValueValidQ(value: string) {
+  return value !== '' && Number(value) >= 0 && Number(value) <= 1;
 }
 
 function App() {
@@ -40,6 +50,8 @@ function App() {
 
   const iterations = useAppSelector(selectIterations);
   const periods = useAppSelector(selectPeriods);
+  const q = useAppSelector(selectQ);
+
   const [markovChain, setMarkovChain] = useState(true);
 
   const canGenerate = useAppSelector(selectCanGenerate);
@@ -63,6 +75,13 @@ function App() {
   const onPeriodYChange = useCallback(
     (yShift: number) => {
       dispatch(periodUpdated({ yShift }));
+    },
+    [dispatch]
+  );
+
+  const onQChange = useCallback(
+    (q: number) => {
+      dispatch(qUpdated({ q }));
     },
     [dispatch]
   );
@@ -129,7 +148,7 @@ function App() {
           >
             <div
               css={css`
-                margin-bottom: 10px;
+                margin-bottom: 20px;
                 width: 100%;
                 display: flex;
                 justify-content: space-between;
@@ -138,12 +157,13 @@ function App() {
               <div
                 css={css`
                   display: flex;
+                  align-items: baseline;
                 `}
               >
                 <ConfigNumberInputWithLabel
                   label="Iterations:"
                   initialValue={iterations}
-                  inputValueValid={(value) => value !== '' && Number(value) > 0}
+                  inputValueValid={isInputValueValidIterations}
                   onValidChange={onIterationsChange}
                 />
                 <div
@@ -162,6 +182,18 @@ function App() {
                     label="Markov Chain"
                   />
                 </div>
+                <ConfigNumberInputWithLabel
+                  label="q:"
+                  initialValue={q}
+                  inputValueValid={isInputValueValidQ}
+                  disabled={!markovChain}
+                  onValidChange={onQChange}
+                  inputProps={{
+                    step: '0.05',
+                    min: '0',
+                    max: '1',
+                  }}
+                />
               </div>
               <div>
                 <Button
@@ -189,18 +221,30 @@ function App() {
                   initialValue={periods.xShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodXChange}
+                  inputProps={{
+                    step: '1',
+                    min: '0',
+                  }}
                 />
                 <ConfigNumberInputWithLabel
                   label="yShift:"
                   initialValue={periods.yShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodYChange}
+                  inputProps={{
+                    step: '1',
+                    min: '0',
+                  }}
                 />
                 <ConfigNumberInputWithLabel
                   label="zHeight:"
                   initialValue={periods.zHeight}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodZChange}
+                  inputProps={{
+                    step: '1',
+                    min: '0',
+                  }}
                 />
               </div>
               <div>
