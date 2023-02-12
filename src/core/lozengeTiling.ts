@@ -151,6 +151,15 @@ export class PeriodicLozengeTiling {
   }
 
   private canAddBox(x: number, y: number, z: number) {
+    if (
+      this.periods.xShift === 0 &&
+      this.periods.yShift === 0 &&
+      z > this.periods.zHeight - 1
+    ) {
+      // special case, only height is restricted
+      return false;
+    }
+
     return (
       !this.isWallOrBox(x, y, z) && // no box in tested position
       // looking from +y
@@ -303,10 +312,15 @@ export class PeriodicLozengeTiling {
 
   //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
   private normalize(x: number, y: number, z: number): Vector3Tuple {
-    // yShift < xShift, yShift !== 0
-    // xShift !== 0 || yShift !=== 0 // aspon 1 nenulovy
-    // (y div yShift)
-    const shift = Math.floor(y / this.periods.yShift);
+    if (this.periods.xShift === 0 && this.periods.yShift === 0) {
+      return [x, y, z];
+    }
+
+    // xShift !== 0 || yShift !=== 0
+    const shift =
+      this.periods.yShift >= this.periods.xShift
+        ? Math.floor(y / this.periods.yShift)
+        : Math.floor(x / this.periods.xShift);
 
     const normalized: Vector3Tuple = [
       x - shift * this.periods.xShift,
