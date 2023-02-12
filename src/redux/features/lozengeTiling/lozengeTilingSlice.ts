@@ -18,23 +18,25 @@ interface LozengeTilingState {
   boxes: Vector3Tuple[];
 }
 
+const initialPeriods = {
+  xShift: 1,
+  yShift: 2,
+  zHeight: 2,
+};
+
+// using a separate class instance to keep track of tyling data
+const lozengeTiling = new PeriodicLozengeTiling(initialPeriods);
+
 const initialState: LozengeTilingState = {
-  periods: {
-    xShift: 1,
-    yShift: 2,
-    zHeight: 2,
-  },
+  periods: initialPeriods,
   iterations: 100,
   q: 0.9, // input <0, 1>
   canGenerate: true,
   canAddBox: false,
   canRemoveBox: false,
-  walls: [],
+  walls: lozengeTiling.getWallVoxels(),
   boxes: [],
 };
-
-// using a separate class instance to keep track of tyling data
-const lozengeTiling = new PeriodicLozengeTiling(initialState.periods);
 
 export const lozengeTilingSlice = createSlice({
   name: 'lozengeTiling',
@@ -48,6 +50,8 @@ export const lozengeTilingSlice = createSlice({
       state.canAddBox = false;
       state.canRemoveBox = false;
       lozengeTiling.setPeriods(state.periods);
+      state.walls = lozengeTiling.getWallVoxels();
+      state.boxes = [];
     },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
@@ -68,7 +72,6 @@ export const lozengeTilingSlice = createSlice({
     generateByAddingOnly: (state) => {
       lozengeTiling.generateByAddingOnly(state.iterations);
 
-      state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
       state.canAddBox = true;
       state.canRemoveBox = true;
@@ -76,7 +79,6 @@ export const lozengeTilingSlice = createSlice({
     generateWithMarkovChain: (state) => {
       lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
 
-      state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
       state.canAddBox = true;
       state.canRemoveBox = true;
@@ -84,14 +86,12 @@ export const lozengeTilingSlice = createSlice({
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
 
-      state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
     },
     removeRandomBox: (state) => {
       if (state.iterations > 1) {
         lozengeTiling.removeRandomBox();
 
-        state.walls = lozengeTiling.getWallVoxels();
         state.boxes = lozengeTiling.getBoxVoxels();
       } else {
         state.canRemoveBox = false;
