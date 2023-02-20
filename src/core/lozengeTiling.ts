@@ -6,38 +6,38 @@ function randomIntFromInterval(min: number, max: number) {
 }
 
 class Vector3TupleSet {
-  private arrList: Vector3Tuple[] = [];
+  private vectorList: Vector3Tuple[] = [];
 
-  constructor(arrList: Vector3Tuple[] = []) {
-    this.arrList.push(...arrList);
+  constructor(vectorList: Vector3Tuple[] = []) {
+    this.vectorList.push(...vectorList);
   }
 
-  private arraysEqual(a: Vector3Tuple, b: Vector3Tuple) {
+  private vectorsEqual(a: Vector3Tuple, b: Vector3Tuple) {
     for (let i = 0; i < a.length; i++) {
       if (a[i] !== b[i]) return false;
     }
     return true;
   }
 
-  public has(arr: Vector3Tuple): boolean {
-    for (let i = 0; i < this.arrList.length; i++) {
-      if (this.arraysEqual(this.arrList[i], arr)) {
+  public has(vector: Vector3Tuple): boolean {
+    for (let i = 0; i < this.vectorList.length; i++) {
+      if (this.vectorsEqual(this.vectorList[i], vector)) {
         return true;
       }
     }
     return false;
   }
 
-  public add(arr: Vector3Tuple): void {
-    if (!this.has(arr)) {
-      this.arrList.push(arr);
+  public add(vector: Vector3Tuple): void {
+    if (!this.has(vector)) {
+      this.vectorList.push(vector);
     }
   }
 
-  public delete(arr: Vector3Tuple): boolean {
-    for (let i = 0; i < this.arrList.length; i++) {
-      if (this.arraysEqual(this.arrList[i], arr)) {
-        this.arrList.splice(i, 1);
+  public delete(vector: Vector3Tuple): boolean {
+    for (let i = 0; i < this.vectorList.length; i++) {
+      if (this.vectorsEqual(this.vectorList[i], vector)) {
+        this.vectorList.splice(i, 1);
         return true;
       }
     }
@@ -45,15 +45,13 @@ class Vector3TupleSet {
   }
 
   public getRandom(): Vector3Tuple {
-    return this.arrList[randomIntFromInterval(0, this.arrList.length - 1)];
-  }
-
-  public getAll(): Vector3Tuple[] {
-    return this.arrList;
+    return this.vectorList[
+      randomIntFromInterval(0, this.vectorList.length - 1)
+    ];
   }
 
   public size(): number {
-    return this.arrList.length;
+    return this.vectorList.length;
   }
 }
 
@@ -153,7 +151,7 @@ export class PeriodicLozengeTiling {
   }
 
   private getHeight(x: number, y: number) {
-    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+    const [nx, ny] = this.normalize(x, y, 0);
     const savedHeight = this.data.get(nx, ny);
 
     return nx >= 0
@@ -164,7 +162,7 @@ export class PeriodicLozengeTiling {
   }
 
   private incrementHeight(x: number, y: number) {
-    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+    const [nx, ny] = this.normalize(x, y, 0);
 
     const prevSavedHeight = this.data.get(nx, ny);
 
@@ -172,7 +170,7 @@ export class PeriodicLozengeTiling {
   }
 
   private decrementHeight(x: number, y: number) {
-    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+    const [nx, ny] = this.normalize(x, y, 0);
 
     const prevSavedHeight = this.data.get(nx, ny);
     if (prevSavedHeight < 0) {
