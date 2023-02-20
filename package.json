@@ -75,6 +75,7 @@
     "build": "webpack --mode=production",
     "serve": "serve build -l 8080",
     "deploy": "gh-pages -d build",
+    "publish": "npm run build && npm run deploy",
     "test": "jest"
   },
   "engines": {
