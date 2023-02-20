@@ -34,7 +34,7 @@ class Vector3TupleSet {
     }
   }
 
-  public remove(arr: Vector3Tuple): boolean {
+  public delete(arr: Vector3Tuple): boolean {
     for (let i = 0; i < this.arrList.length; i++) {
       if (this.arraysEqual(this.arrList[i], arr)) {
         this.arrList.splice(i, 1);
@@ -136,20 +136,20 @@ export class PeriodicLozengeTiling {
     this.reset();
   }
 
-  private addAddableBox(box: Vector3Tuple) {
-    this.addableBoxes.add(this.normalize(...box));
+  private addAddableBox(x: number, y: number, z: number) {
+    this.addableBoxes.add(this.normalize(x, y, z));
   }
 
-  private removeAddableBox(box: Vector3Tuple) {
-    this.addableBoxes.remove(this.normalize(...box));
+  private removeAddableBox(x: number, y: number, z: number) {
+    this.addableBoxes.delete(this.normalize(x, y, z));
   }
 
-  private addRemovableBox(box: Vector3Tuple) {
-    this.removableBoxes.add(this.normalize(...box));
+  private addRemovableBox(x: number, y: number, z: number) {
+    this.removableBoxes.add(this.normalize(x, y, z));
   }
 
-  private removeRemovableBox(box: Vector3Tuple) {
-    this.removableBoxes.remove(this.normalize(...box));
+  private removeRemovableBox(x: number, y: number, z: number) {
+    this.removableBoxes.delete(this.normalize(x, y, z));
   }
 
   private getHeight(x: number, y: number) {
@@ -242,29 +242,29 @@ export class PeriodicLozengeTiling {
       // add box
       this.incrementHeight(nx, ny);
       // just added box
-      this.removeAddableBox([nx, ny, nz]); // can't be added again
-      this.addRemovableBox([nx, ny, nz]); // can be removed
+      this.removeAddableBox(nx, ny, nz); // can't be added again
+      this.addRemovableBox(nx, ny, nz); // can be removed
 
       // update addable boxes
       if (this.canAddBox(nx + 1, ny, nz)) {
-        this.addAddableBox([x + 1, y, z]);
+        this.addAddableBox(x + 1, y, z);
       }
       if (this.canAddBox(nx, ny + 1, nz)) {
-        this.addAddableBox([x, y + 1, z]);
+        this.addAddableBox(x, y + 1, z);
       }
       if (this.canAddBox(nx, ny, nz + 1)) {
-        this.addAddableBox([x, y, z + 1]);
+        this.addAddableBox(x, y, z + 1);
       }
 
       // update removable boxes
       if (!this.canRemoveBox(x - 1, y, z)) {
-        this.removeRemovableBox([x - 1, y, z]);
+        this.removeRemovableBox(x - 1, y, z);
       }
       if (!this.canRemoveBox(x, y - 1, z)) {
-        this.removeRemovableBox([x, y - 1, z]);
+        this.removeRemovableBox(x, y - 1, z);
       }
       if (!this.canRemoveBox(x, y, z - 1)) {
-        this.removeRemovableBox([x, y, z - 1]);
+        this.removeRemovableBox(x, y, z - 1);
       }
     }
   }
@@ -276,29 +276,29 @@ export class PeriodicLozengeTiling {
       // remove box
       this.decrementHeight(nx, ny);
       // just removed box
-      this.addAddableBox([nx, ny, nz]); // can be added again
-      this.removeRemovableBox([nx, ny, nz]); // can't be removed again
+      this.addAddableBox(nx, ny, nz); // can be added again
+      this.removeRemovableBox(nx, ny, nz); // can't be removed again
 
       // update addable boxes
       if (!this.canAddBox(nx + 1, ny, nz)) {
-        this.removeAddableBox([x + 1, y, z]);
+        this.removeAddableBox(x + 1, y, z);
       }
       if (!this.canAddBox(nx, ny + 1, nz)) {
-        this.removeAddableBox([x, y + 1, z]);
+        this.removeAddableBox(x, y + 1, z);
       }
       if (!this.canAddBox(nx, ny, nz + 1)) {
-        this.removeAddableBox([x, y, z + 1]);
+        this.removeAddableBox(x, y, z + 1);
       }
 
       // update removable boxes
       if (this.canRemoveBox(x - 1, y, z)) {
-        this.addRemovableBox([x - 1, y, z]);
+        this.addRemovableBox(x - 1, y, z);
       }
       if (this.canRemoveBox(x, y - 1, z)) {
-        this.addRemovableBox([x, y - 1, z]);
+        this.addRemovableBox(x, y - 1, z);
       }
       if (this.canRemoveBox(x, y, z - 1)) {
-        this.addRemovableBox([x, y, z - 1]);
+        this.addRemovableBox(x, y, z - 1);
       }
     }
   }
