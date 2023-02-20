@@ -12,6 +12,7 @@ interface LozengeTilingState {
   iterations: number;
   q: number;
   drawDistance: number;
+  infinityDrawDistance: number;
   canGenerate: boolean;
   canAddBox: boolean;
   canRemoveBox: boolean;
@@ -20,6 +21,7 @@ interface LozengeTilingState {
 }
 
 const initialDrawDistance = 4;
+const initialInfinityDrawDistance = 30;
 
 const initialPeriods = {
   xShift: 1,
@@ -30,7 +32,8 @@ const initialPeriods = {
 // using a separate class instance to keep track of tyling data
 const lozengeTiling = new PeriodicLozengeTiling(
   initialPeriods,
-  initialDrawDistance
+  initialDrawDistance,
+  initialInfinityDrawDistance
 );
 
 const initialState: LozengeTilingState = {
@@ -38,6 +41,7 @@ const initialState: LozengeTilingState = {
   iterations: 1,
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
+  infinityDrawDistance: initialInfinityDrawDistance,
   canGenerate: true,
   canAddBox: false,
   canRemoveBox: false,
@@ -75,6 +79,16 @@ export const lozengeTilingSlice = createSlice({
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
     },
+    infinityDrawDistanceUpdated: (
+      state,
+      action: PayloadAction<{ infinityDrawDistance: number }>
+    ) => {
+      const { infinityDrawDistance } = action.payload;
+      lozengeTiling.setInfinityDrawDistance(infinityDrawDistance);
+      state.infinityDrawDistance = infinityDrawDistance;
+      state.walls = lozengeTiling.getWallVoxels();
+      state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
+    },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
       state.canAddBox = false;
@@ -103,19 +117,23 @@ export const lozengeTilingSlice = createSlice({
 
       state.boxes = lozengeTiling.getBoxVoxels();
       state.canAddBox = true;
-      state.canRemoveBox = true;
+      if (state.boxes.length > 0) {
+        state.canRemoveBox = true;
+      }
     },
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
-
       state.boxes = lozengeTiling.getBoxVoxels();
+      if (state.boxes.length > 0) {
+        state.canRemoveBox = true;
+      }
     },
     removeRandomBox: (state) => {
-      if (state.iterations > 1) {
+      if (state.boxes.length > 1) {
         lozengeTiling.removeRandomBox();
-
         state.boxes = lozengeTiling.getBoxVoxels();
-      } else {
+      }
+      if (state.boxes.length <= 0) {
         state.canRemoveBox = false;
       }
     },
@@ -136,6 +154,11 @@ export const selectQ = (state: RootState) => {
 export const selectDrawDistance = (state: RootState) => {
   const { drawDistance } = state.lozengeTiling;
   return drawDistance;
+};
+
+export const selectInfinityDrawDistance = (state: RootState) => {
+  const { infinityDrawDistance } = state.lozengeTiling;
+  return infinityDrawDistance;
 };
 
 export const selectIterations = (state: RootState) => {
@@ -180,6 +203,7 @@ export const {
   removeRandomBox,
   qUpdated,
   drawDistanceUpdated,
+  infinityDrawDistanceUpdated,
 } = actions;
 
 export default reducer;

@@ -114,14 +114,20 @@ export interface LozengeTilingPeriods {
 export class PeriodicLozengeTiling {
   private data = new NumberMap();
   private drawDistance: number;
+  private infinityDrawDistance = 30;
 
   private periods: LozengeTilingPeriods;
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
   private removableBoxes: Vector3TupleSet = new Vector3TupleSet([]);
 
-  constructor(initialPeriods: LozengeTilingPeriods, drawDistance: number) {
+  constructor(
+    initialPeriods: LozengeTilingPeriods,
+    drawDistance: number,
+    infinityDrawDistance: number
+  ) {
     this.periods = initialPeriods;
     this.drawDistance = drawDistance;
+    this.infinityDrawDistance = infinityDrawDistance;
   }
 
   public reset() {
@@ -138,6 +144,10 @@ export class PeriodicLozengeTiling {
 
   public setDrawDistance(drawDistance: number) {
     this.drawDistance = drawDistance;
+  }
+
+  public setInfinityDrawDistance(infinityDrawDistance: number) {
+    this.infinityDrawDistance = infinityDrawDistance;
   }
 
   private addAddableBox(x: number, y: number, z: number) {
@@ -344,12 +354,15 @@ export class PeriodicLozengeTiling {
   }
 
   private getVoxelBoundaries() {
-    const defaultWidth = 30;
+    const infinityDrawDistance = this.infinityDrawDistance;
     const drawDistance = this.drawDistance;
     const { xShift, yShift, zHeight } = this.periods;
-    const xHalfWidth = xShift > 0 ? xShift * drawDistance : defaultWidth;
-    const yHalfWidth = yShift > 0 ? yShift * drawDistance : defaultWidth;
-    const zHalfWidth = zHeight > 0 ? zHeight * drawDistance : defaultWidth;
+    const xHalfWidth =
+      xShift > 0 ? xShift * drawDistance : infinityDrawDistance;
+    const yHalfWidth =
+      yShift > 0 ? yShift * drawDistance : infinityDrawDistance;
+    const zHalfWidth =
+      zHeight > 0 ? zHeight * drawDistance : infinityDrawDistance;
 
     return {
       bondX: {

@@ -17,6 +17,7 @@ import {
   drawDistanceUpdated,
   generateByAddingOnly,
   generateWithMarkovChain,
+  infinityDrawDistanceUpdated,
   iterationsUpdated,
   periodUpdated,
   qUpdated,
@@ -26,6 +27,7 @@ import {
   selectCanGenerate,
   selectCanRemoveBox,
   selectDrawDistance,
+  selectInfinityDrawDistance,
   selectIterations,
   selectPeriods,
   selectQ,
@@ -60,6 +62,7 @@ function App() {
   const periods = useAppSelector(selectPeriods);
   const q = useAppSelector(selectQ);
   const drawDistance = useAppSelector(selectDrawDistance);
+  const infinityDrawDistance = useAppSelector(selectInfinityDrawDistance);
 
   const [markovChain, setMarkovChain] = useState(true);
 
@@ -105,6 +108,13 @@ function App() {
   const onDrawDistanceChange = useCallback(
     (drawDistance: number) => {
       dispatch(drawDistanceUpdated({ drawDistance }));
+    },
+    [dispatch]
+  );
+
+  const onInfinityDrawDistanceChange = useCallback(
+    (infinityDrawDistance: number) => {
+      dispatch(infinityDrawDistanceUpdated({ infinityDrawDistance }));
     },
     [dispatch]
   );
@@ -221,6 +231,26 @@ function App() {
                   Reset
                 </Button>
                 <Button
+                  variant="outlined"
+                  disabled={!canAddBox}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                  onClick={onAddBoxClick}
+                >
+                  <Add />
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={!canRemoveBox}
+                  onClick={onRemoveBoxClick}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                >
+                  <Remove />
+                </Button>
+                <Button
                   variant="contained"
                   type="submit"
                   disabled={!canGenerate}
@@ -238,8 +268,16 @@ function App() {
               <div
                 css={css`
                   display: flex;
+                  align-items: baseline;
                 `}
               >
+                <div
+                  css={css`
+                    margin: 0 10px 0 0;
+                  `}
+                >
+                  Periods:
+                </div>
                 <ConfigNumberInputWithLabel
                   label="xShift:"
                   initialValue={periods.xShift}
@@ -270,8 +308,16 @@ function App() {
                     min: '0',
                   }}
                 />
+                <div
+                  css={css`
+                    margin: 0 10px 0 30px;
+                  `}
+                >
+                  Draw:
+                </div>
+
                 <ConfigNumberInputWithLabel
-                  label="draw dist:"
+                  label="reps:"
                   initialValue={drawDistance}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={onDrawDistanceChange}
@@ -283,29 +329,19 @@ function App() {
                     margin-right: 10px;
                   `}
                 />
-              </div>
-              <div
-                css={css`
-                  white-space: nowrap;
-                `}
-              >
-                <Button
-                  variant="outlined"
-                  disabled={!canAddBox}
+                <ConfigNumberInputWithLabel
+                  label="infinity:"
+                  initialValue={infinityDrawDistance}
+                  inputValueValid={isInputValueValidDrawDistance}
+                  onValidChange={onInfinityDrawDistanceChange}
+                  inputProps={{
+                    step: '1',
+                    min: '1',
+                  }}
                   css={css`
                     margin-right: 10px;
                   `}
-                  onClick={onAddBoxClick}
-                >
-                  <Add />
-                </Button>
-                <Button
-                  variant="outlined"
-                  disabled={!canRemoveBox}
-                  onClick={onRemoveBoxClick}
-                >
-                  <Remove />
-                </Button>
+                />
               </div>
             </div>
           </Panel>
