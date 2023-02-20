@@ -65,7 +65,12 @@ const generateConfig: WebpackConfigurationGenerator = (_env, argv) => {
         {
           test: /\.css$/,
           use: [
-            isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
+            {
+              loader: MiniCssExtractPlugin.loader,
+              options: {
+                publicPath: '../../',
+              },
+            },
             'css-loader',
           ],
         },
@@ -81,13 +86,10 @@ const generateConfig: WebpackConfigurationGenerator = (_env, argv) => {
     },
     ignoreWarnings: [/Failed to parse source map/], // paper js causes troubles
     plugins: [
-      ...(isProduction
-        ? [
-            new MiniCssExtractPlugin({
-              filename: 'resources/css/[chunkhash].[name].css',
-            }),
-          ]
-        : [new ReactRefreshWebpackPlugin()]),
+      ...(isProduction ? [] : [new ReactRefreshWebpackPlugin()]),
+      new MiniCssExtractPlugin({
+        filename: 'resources/css/[chunkhash].[name].css',
+      }),
       new ESLintPlugin({
         extensions: ['js', 'jsx', 'ts', 'tsx'],
         exclude: 'node_modules',
