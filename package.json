@@ -72,7 +72,7 @@
   "scripts": {
     "start": "webpack serve",
     "build": "webpack --mode=production",
-    "serve": "serve build",
+    "serve": "serve build -l 8080",
     "test": "jest"
   },
   "engines": {
