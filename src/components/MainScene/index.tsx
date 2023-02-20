@@ -87,7 +87,7 @@ function MainScene() {
     >
       <Canvas
         camera={{
-          position: [helpersSize * 2, helpersSize, helpersSize],
+          position: [helpersSize, helpersSize, helpersSize],
           near: 0.1,
           far: helpersSize * 4,
           up: [0, 0, 1],
