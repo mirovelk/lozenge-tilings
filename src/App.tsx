@@ -6,7 +6,7 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 
@@ -21,6 +21,7 @@ import {
   periodUpdated,
   qUpdated,
   removeRandomBox,
+  reset,
   selectCanAddBox,
   selectCanGenerate,
   selectCanRemoveBox,
@@ -138,11 +139,9 @@ function App() {
     }
   }, [canRemoveBox, dispatch]);
 
-  // auto generate on start
-  useEffect(() => {
-    generateTiling();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // only run once
+  const resetOnClick = useCallback(() => {
+    dispatch(reset());
+  }, [dispatch]);
 
   return (
     <StyleProvider>
@@ -211,6 +210,16 @@ function App() {
                 />
               </div>
               <div>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={resetOnClick}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                >
+                  Reset
+                </Button>
                 <Button
                   variant="contained"
                   type="submit"

@@ -35,7 +35,7 @@ const lozengeTiling = new PeriodicLozengeTiling(
 
 const initialState: LozengeTilingState = {
   periods: initialPeriods,
-  iterations: 100,
+  iterations: 1,
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
   canGenerate: true,
@@ -49,6 +49,11 @@ export const lozengeTilingSlice = createSlice({
   name: 'lozengeTiling',
   initialState,
   reducers: {
+    reset: (state) => {
+      lozengeTiling.reset();
+      state.walls = lozengeTiling.getWallVoxels();
+      state.boxes = lozengeTiling.getBoxVoxels();
+    },
     periodUpdated: (
       state,
       action: PayloadAction<Partial<LozengeTilingPeriods>>
@@ -165,6 +170,7 @@ export const selectPeriodBoxCount = () => {
 const { actions, reducer } = lozengeTilingSlice;
 
 export const {
+  reset,
   generateByAddingOnly,
   generateWithMarkovChain,
   periodUpdated,

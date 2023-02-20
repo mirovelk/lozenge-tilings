@@ -124,7 +124,7 @@ export class PeriodicLozengeTiling {
     this.drawDistance = drawDistance;
   }
 
-  private reset() {
+  public reset() {
     this.data.clear();
     this.addableBoxes = new Vector3TupleSet([[0, 0, 0]]);
     this.removableBoxes = new Vector3TupleSet([]);
