@@ -216,7 +216,7 @@ function App() {
                   type="submit"
                   disabled={!canGenerate}
                 >
-                  Generate
+                  Generate More
                 </Button>
               </div>
             </div>

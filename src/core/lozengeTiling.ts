@@ -421,7 +421,6 @@ export class PeriodicLozengeTiling {
   }
 
   public generateByAddingOnly(iterations: number) {
-    this.reset();
     withDurationLogging('generateByAddingOnly', () => {
       for (let i = 0; i < iterations; i++) {
         this.addRandomBox();
@@ -430,8 +429,6 @@ export class PeriodicLozengeTiling {
   }
 
   public generateWithMarkovChain(iterations: number, q: number) {
-    this.reset();
-
     withDurationLogging(
       `generateWithMarkovChain with ${iterations} iterations`,
       () => {
