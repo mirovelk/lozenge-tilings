@@ -1,4 +1,5 @@
 import { Vector3Tuple } from 'three';
+import { withDurationLogging } from '../util/benchmark';
 
 function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -56,6 +57,43 @@ class Vector3TupleSet {
   }
 }
 
+class NumberMap {
+  private data: Map<number, number>;
+
+  constructor() {
+    this.data = new Map<number, number>();
+  }
+
+  private getKey(x: number, y: number): number {
+    if (x < -32768 || x > 32767 || y < -32768 || y > 32767) {
+      throw new Error('x and y must be between -32768 and 32767');
+    }
+    return (x << 16) | y;
+  }
+
+  public get(x: number, y: number): number {
+    const key = this.getKey(x, y);
+    return this.data.get(key) ?? -1;
+  }
+
+  public set(x: number, y: number, value: number): void {
+    const key = this.getKey(x, y);
+    if (value === -1) {
+      this.data.delete(key);
+    } else {
+      this.data.set(key, value);
+    }
+  }
+
+  public clear(): void {
+    this.data.clear();
+  }
+
+  public size(): number {
+    return this.data.size;
+  }
+}
+
 export interface LozengeTiling {
   data: number[][];
   addableBoxes: Vector3Tuple[];
@@ -76,7 +114,8 @@ export interface LozengeTilingPeriods {
 // 2D array of numbers ([x][y] axis), where each number represents the height of a column ([z] axis), height -1 means no box in that column
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 export class PeriodicLozengeTiling {
-  private data: number[][] = [];
+  private data = new NumberMap();
+
   private periods: LozengeTilingPeriods;
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
   private removableBoxes: Vector3TupleSet = new Vector3TupleSet([]);
@@ -86,7 +125,7 @@ export class PeriodicLozengeTiling {
   }
 
   private reset() {
-    this.data = [];
+    this.data.clear();
     this.addableBoxes = new Vector3TupleSet([[0, 0, 0]]);
     this.removableBoxes = new Vector3TupleSet([]);
   }
@@ -114,31 +153,48 @@ export class PeriodicLozengeTiling {
   }
 
   private getHeight(x: number, y: number) {
-    return this.data?.[x]?.[y] ?? -1;
-  }
+    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+    const savedHeight = this.data.get(nx, ny);
 
-  private initializeHeight(x: number, y: number) {
-    if (this.data.length < x + 1) {
-      this.data[x] = [];
-    }
-    if (this.data[x].length < y + 1) {
-      this.data[x][y] = -1;
-    }
+    return nx >= 0
+      ? savedHeight
+      : savedHeight +
+          this.periods.zHeight *
+            (Math.floor((-nx - 1) / this.periods.xShift) + 1);
   }
 
   private incrementHeight(x: number, y: number) {
-    this.initializeHeight(x, y);
-    this.data[x][y] += 1;
+    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+
+    const prevSavedHeight = this.data.get(nx, ny);
+
+    this.data.set(nx, ny, prevSavedHeight + 1);
   }
 
   private decrementHeight(x: number, y: number) {
-    this.initializeHeight(x, y);
-    this.data[x][y] -= 1;
+    const [nx, ny] = this.normalize(x, y, 0); // TODO remove z
+
+    const prevSavedHeight = this.data.get(nx, ny);
+    if (prevSavedHeight < 0) {
+      throw new Error(`height is already -1 or less: ${prevSavedHeight}`);
+    }
+
+    this.data.set(nx, ny, prevSavedHeight - 1);
   }
 
   private isWall(x: number, y: number, z: number) {
+    if (this.periods.xShift === 0 && this.periods.yShift === 0) {
+      return x < 0 || y < 0 || z < 0;
+    }
+
     const [nx, ny, nz] = this.normalize(x, y, z);
-    return nx < 0 || ny < 0 || nz < 0;
+
+    return (
+      nz < 0 ||
+      (this.periods.yShift >= this.periods.xShift
+        ? nx < -Math.floor(nz / this.periods.zHeight) * this.periods.xShift
+        : ny < -Math.floor(nz / this.periods.zHeight) * this.periods.yShift)
+    );
   }
 
   private isBox(x: number, y: number, z: number) {
@@ -278,10 +334,10 @@ export class PeriodicLozengeTiling {
   }
 
   private getVoxelBoundaries() {
-    // TODO: calculate boundaries based on data or config
+    // TODO: calculate boundaries based on data or config 3/4 poriods
     return {
-      start: -50,
-      end: 50,
+      start: -20,
+      end: 20,
     };
   }
 
@@ -303,18 +359,19 @@ export class PeriodicLozengeTiling {
   }
 
   public getWallVoxels() {
-    return this.getVoxels(this.isWall.bind(this));
+    return withDurationLogging('wall', () => {
+      return this.getVoxels(this.isWall.bind(this));
+    });
   }
 
   public getBoxVoxels() {
-    return this.getVoxels(this.isBox.bind(this));
+    return withDurationLogging('boxes', () => {
+      return this.getVoxels(this.isBox.bind(this));
+    });
   }
 
   public getPeriodBoxCount() {
-    const total = this.data.reduce((acc, row) => {
-      return acc + row.reduce((acc, height) => acc + height + 1, 0);
-    }, 0);
-    return total;
+    return this.data.size();
   }
 
   //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
@@ -340,31 +397,32 @@ export class PeriodicLozengeTiling {
 
   public generateByAddingOnly(iterations: number) {
     this.reset();
-    const start = new Date().getTime();
-    for (let i = 0; i < iterations; i++) {
-      this.addRandomBox();
-    }
-    const end = new Date().getTime();
-    console.log(`iterations: ${iterations}; duration: ${end - start}ms`);
+    withDurationLogging('generateByAddingOnly', () => {
+      for (let i = 0; i < iterations; i++) {
+        this.addRandomBox();
+      }
+    });
   }
 
   public generateWithMarkovChain(iterations: number, q: number) {
     this.reset();
 
-    const start = new Date().getTime();
-    for (let i = 0; i < iterations; i++) {
-      const rnd1 =
-        (Math.log(1 - Math.random()) * -1) / this.addableBoxesCount() / q;
-      const rnd2 =
-        (Math.log(1 - Math.random()) * -1) / this.removableBoxesCount();
+    withDurationLogging(
+      `generateWithMarkovChain with ${iterations} iterations`,
+      () => {
+        for (let i = 0; i < iterations; i++) {
+          const rnd1 =
+            (Math.log(1 - Math.random()) * -1) / this.addableBoxesCount() / q;
+          const rnd2 =
+            (Math.log(1 - Math.random()) * -1) / this.removableBoxesCount();
 
-      if (rnd1 < rnd2) {
-        this.addRandomBox();
-      } else {
-        this.removeRandomBox();
+          if (rnd1 < rnd2) {
+            this.addRandomBox();
+          } else {
+            this.removeRandomBox();
+          }
+        }
       }
-    }
-    const end = new Date().getTime();
-    console.log(`iterations: ${iterations}; duration: ${end - start}ms`);
+    );
   }
 }
