@@ -104,7 +104,7 @@ function MainScene() {
           args={[helpersSize, helpersSize / voxelSize, '#777777', '#b1b1b1']}
           rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
         /> */}
-
+        {/* <axesHelper args={[helpersSize]} /> */}
         {walls.length > 0 && (
           <VoxelInstances voxels={walls} map={boxTextureBlue} />
         )}

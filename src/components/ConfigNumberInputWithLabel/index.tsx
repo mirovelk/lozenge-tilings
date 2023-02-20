@@ -52,6 +52,7 @@ function ConfigNumberInputWithLabel({
         color="text.secondary"
         css={css`
           margin-right: 10px;
+          white-space: nowrap;
         `}
       >
         {label}

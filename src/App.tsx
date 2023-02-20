@@ -14,6 +14,7 @@ import StyleProvider from './components/StyleProvider';
 
 import {
   addRandomBox,
+  drawDistanceUpdated,
   generateByAddingOnly,
   generateWithMarkovChain,
   iterationsUpdated,
@@ -23,6 +24,7 @@ import {
   selectCanAddBox,
   selectCanGenerate,
   selectCanRemoveBox,
+  selectDrawDistance,
   selectIterations,
   selectPeriods,
   selectQ,
@@ -46,12 +48,17 @@ function isInputValueValidQ(value: string) {
   return value !== '' && Number(value) >= 0 && Number(value) <= 1;
 }
 
+function isInputValueValidDrawDistance(value: string) {
+  return value !== '' && Number(value) >= 1 && Number.isInteger(Number(value));
+}
+
 function App() {
   const dispatch = useAppDispatch();
 
   const iterations = useAppSelector(selectIterations);
   const periods = useAppSelector(selectPeriods);
   const q = useAppSelector(selectQ);
+  const drawDistance = useAppSelector(selectDrawDistance);
 
   const [markovChain, setMarkovChain] = useState(true);
 
@@ -90,6 +97,13 @@ function App() {
   const onPeriodZChange = useCallback(
     (zHeight: number) => {
       dispatch(periodUpdated({ zHeight }));
+    },
+    [dispatch]
+  );
+
+  const onDrawDistanceChange = useCallback(
+    (drawDistance: number) => {
+      dispatch(drawDistanceUpdated({ drawDistance }));
     },
     [dispatch]
   );
@@ -247,8 +261,25 @@ function App() {
                     min: '0',
                   }}
                 />
+                <ConfigNumberInputWithLabel
+                  label="draw dist:"
+                  initialValue={drawDistance}
+                  inputValueValid={isInputValueValidDrawDistance}
+                  onValidChange={onDrawDistanceChange}
+                  inputProps={{
+                    step: '1',
+                    min: '1',
+                  }}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                />
               </div>
-              <div>
+              <div
+                css={css`
+                  white-space: nowrap;
+                `}
+              >
                 <Button
                   variant="outlined"
                   disabled={!canAddBox}

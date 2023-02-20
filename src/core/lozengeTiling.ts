@@ -113,13 +113,15 @@ export interface LozengeTilingPeriods {
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 export class PeriodicLozengeTiling {
   private data = new NumberMap();
+  private drawDistance: number;
 
   private periods: LozengeTilingPeriods;
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
   private removableBoxes: Vector3TupleSet = new Vector3TupleSet([]);
 
-  constructor(initialPeriods: LozengeTilingPeriods) {
+  constructor(initialPeriods: LozengeTilingPeriods, drawDistance: number) {
     this.periods = initialPeriods;
+    this.drawDistance = drawDistance;
   }
 
   private reset() {
@@ -132,6 +134,10 @@ export class PeriodicLozengeTiling {
     this.periods = { ...this.periods, ...periods };
     // reset other data, no longer valid with new periods
     this.reset();
+  }
+
+  public setDrawDistance(drawDistance: number) {
+    this.drawDistance = drawDistance;
   }
 
   private addAddableBox(x: number, y: number, z: number) {
@@ -337,20 +343,36 @@ export class PeriodicLozengeTiling {
   }
 
   private getVoxelBoundaries() {
-    // TODO: calculate boundaries based on data or config 3/4 poriods
+    const defaultWidth = 30;
+    const drawDistance = this.drawDistance;
+    const { xShift, yShift, zHeight } = this.periods;
+    const xHalfWidth = xShift > 0 ? xShift * drawDistance : defaultWidth;
+    const yHalfWidth = yShift > 0 ? yShift * drawDistance : defaultWidth;
+    const zHalfWidth = zHeight > 0 ? zHeight * drawDistance : defaultWidth;
+
     return {
-      start: -20,
-      end: 20,
+      bondX: {
+        start: xShift === 0 ? -1 : -xHalfWidth,
+        end: +xHalfWidth,
+      },
+      bondY: {
+        start: yShift === 0 ? -1 : -yHalfWidth,
+        end: +yHalfWidth,
+      },
+      bondZ: {
+        start: zHeight === 0 ? -1 : -zHalfWidth,
+        end: +zHalfWidth,
+      },
     };
   }
 
   private getVoxels(match: (x: number, y: number, z: number) => boolean) {
     const voxels: Vector3Tuple[] = [];
-    const { start, end } = this.getVoxelBoundaries();
+    const { bondX, bondY, bondZ } = this.getVoxelBoundaries();
 
-    for (let x = start; x < end; x++) {
-      for (let y = start; y < end; y++) {
-        for (let z = start; z < end; z++) {
+    for (let x = bondX.start; x < bondX.end; x++) {
+      for (let y = bondY.start; y < bondY.end; y++) {
+        for (let z = bondZ.start; z < bondZ.end; z++) {
           if (match(x, y, z)) {
             voxels.push([x, y, z]);
           }

@@ -11,12 +11,15 @@ interface LozengeTilingState {
   periods: LozengeTilingPeriods;
   iterations: number;
   q: number;
+  drawDistance: number;
   canGenerate: boolean;
   canAddBox: boolean;
   canRemoveBox: boolean;
   walls: Vector3Tuple[];
   boxes: Vector3Tuple[];
 }
+
+const initialDrawDistance = 4;
 
 const initialPeriods = {
   xShift: 1,
@@ -25,12 +28,16 @@ const initialPeriods = {
 };
 
 // using a separate class instance to keep track of tyling data
-const lozengeTiling = new PeriodicLozengeTiling(initialPeriods);
+const lozengeTiling = new PeriodicLozengeTiling(
+  initialPeriods,
+  initialDrawDistance
+);
 
 const initialState: LozengeTilingState = {
   periods: initialPeriods,
   iterations: 100,
   q: 0.9, // input <0, 1>
+  drawDistance: initialDrawDistance,
   canGenerate: true,
   canAddBox: false,
   canRemoveBox: false,
@@ -52,6 +59,16 @@ export const lozengeTilingSlice = createSlice({
       lozengeTiling.setPeriods(state.periods);
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = [];
+    },
+    drawDistanceUpdated: (
+      state,
+      action: PayloadAction<{ drawDistance: number }>
+    ) => {
+      const { drawDistance } = action.payload;
+      lozengeTiling.setDrawDistance(drawDistance);
+      state.drawDistance = drawDistance;
+      state.walls = lozengeTiling.getWallVoxels();
+      state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
     },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
@@ -111,6 +128,11 @@ export const selectQ = (state: RootState) => {
   return q;
 };
 
+export const selectDrawDistance = (state: RootState) => {
+  const { drawDistance } = state.lozengeTiling;
+  return drawDistance;
+};
+
 export const selectIterations = (state: RootState) => {
   const { iterations } = state.lozengeTiling;
   return iterations;
@@ -151,6 +173,7 @@ export const {
   addRandomBox,
   removeRandomBox,
   qUpdated,
+  drawDistanceUpdated,
 } = actions;
 
 export default reducer;
