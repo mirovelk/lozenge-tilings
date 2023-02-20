@@ -219,6 +219,7 @@ export class PeriodicLozengeTiling {
     if (
       this.periods.xShift === 0 &&
       this.periods.yShift === 0 &&
+      this.periods.zHeight > 0 &&
       z > this.periods.zHeight - 1
     ) {
       // special case, only height is restricted
