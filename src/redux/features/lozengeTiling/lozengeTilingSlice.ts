@@ -14,8 +14,6 @@ interface LozengeTilingState {
   drawDistance: number;
   infinityDrawDistance: number;
   canGenerate: boolean;
-  canAddBox: boolean;
-  canRemoveBox: boolean;
   walls: Vector3Tuple[];
   boxes: Vector3Tuple[];
 }
@@ -38,13 +36,11 @@ const lozengeTiling = new PeriodicLozengeTiling(
 
 const initialState: LozengeTilingState = {
   periods: initialPeriods,
-  iterations: 1,
+  iterations: 10,
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
   infinityDrawDistance: initialInfinityDrawDistance,
   canGenerate: true,
-  canAddBox: false,
-  canRemoveBox: false,
   walls: lozengeTiling.getWallVoxels(),
   boxes: [],
 };
@@ -63,8 +59,6 @@ export const lozengeTilingSlice = createSlice({
       action: PayloadAction<Partial<LozengeTilingPeriods>>
     ) => {
       state.periods = { ...state.periods, ...action.payload };
-      state.canAddBox = false;
-      state.canRemoveBox = false;
       lozengeTiling.setPeriods(state.periods);
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = [];
@@ -91,50 +85,32 @@ export const lozengeTilingSlice = createSlice({
     },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
-      state.canAddBox = false;
-      state.canRemoveBox = false;
     },
     iterationsUpdated: (
       state,
       action: PayloadAction<{ interations: number }>
     ) => {
       state.iterations = action.payload.interations;
-      state.canAddBox = false;
-      state.canRemoveBox = false;
     },
     configValidated: (state, action: PayloadAction<{ valid: boolean }>) => {
       state.canGenerate = action.payload.valid;
     },
     generateByAddingOnly: (state) => {
       lozengeTiling.generateByAddingOnly(state.iterations);
-
       state.boxes = lozengeTiling.getBoxVoxels();
-      state.canAddBox = true;
-      state.canRemoveBox = true;
     },
     generateWithMarkovChain: (state) => {
       lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
-
       state.boxes = lozengeTiling.getBoxVoxels();
-      state.canAddBox = true;
-      if (state.boxes.length > 0) {
-        state.canRemoveBox = true;
-      }
     },
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
       state.boxes = lozengeTiling.getBoxVoxels();
-      if (state.boxes.length > 0) {
-        state.canRemoveBox = true;
-      }
     },
     removeRandomBox: (state) => {
       if (state.boxes.length > 1) {
         lozengeTiling.removeRandomBox();
         state.boxes = lozengeTiling.getBoxVoxels();
-      }
-      if (state.boxes.length <= 0) {
-        state.canRemoveBox = false;
       }
     },
   },
@@ -171,14 +147,8 @@ export const selectCanGenerate = (state: RootState) => {
   return canGenerate;
 };
 
-export const selectCanAddBox = (state: RootState) => {
-  const { canAddBox } = state.lozengeTiling;
-  return canAddBox;
-};
-
-export const selectCanRemoveBox = (state: RootState) => {
-  const { canRemoveBox } = state.lozengeTiling;
-  return canRemoveBox;
+export const selectCanRemoveBox = () => {
+  return lozengeTiling.getPeriodBoxCount() > 0;
 };
 
 export const selectVoxelPositions = (state: RootState) => {

@@ -23,7 +23,6 @@ import {
   qUpdated,
   removeRandomBox,
   reset,
-  selectCanAddBox,
   selectCanGenerate,
   selectCanRemoveBox,
   selectDrawDistance,
@@ -67,7 +66,6 @@ function App() {
   const [markovChain, setMarkovChain] = useState(true);
 
   const canGenerate = useAppSelector(selectCanGenerate);
-  const canAddBox = useAppSelector(selectCanAddBox);
   const canRemoveBox = useAppSelector(selectCanRemoveBox);
 
   const onIterationsChange = useCallback(
@@ -138,10 +136,8 @@ function App() {
   );
 
   const onAddBoxClick = useCallback(() => {
-    if (canAddBox) {
-      dispatch(addRandomBox());
-    }
-  }, [canAddBox, dispatch]);
+    dispatch(addRandomBox());
+  }, [dispatch]);
 
   const onRemoveBoxClick = useCallback(() => {
     if (canRemoveBox) {
@@ -219,7 +215,11 @@ function App() {
                   }}
                 />
               </div>
-              <div>
+              <div
+                css={css`
+                  white-space: nowrap;
+                `}
+              >
                 <Button
                   variant="outlined"
                   color="error"
@@ -232,16 +232,6 @@ function App() {
                 </Button>
                 <Button
                   variant="outlined"
-                  disabled={!canAddBox}
-                  css={css`
-                    margin-right: 10px;
-                  `}
-                  onClick={onAddBoxClick}
-                >
-                  <Add />
-                </Button>
-                <Button
-                  variant="outlined"
                   disabled={!canRemoveBox}
                   onClick={onRemoveBoxClick}
                   css={css`
@@ -249,6 +239,15 @@ function App() {
                   `}
                 >
                   <Remove />
+                </Button>
+                <Button
+                  variant="outlined"
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                  onClick={onAddBoxClick}
+                >
+                  <Add />
                 </Button>
                 <Button
                   variant="contained"

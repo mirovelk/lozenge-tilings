@@ -135,9 +135,7 @@ function MainScene() {
             padding: 10px;
           `}
         >
-          <>
-            Box count: {totalBoxCount} / {boxes.length}
-          </>
+          <>Box count: {totalBoxCount}</>
         </Paper>
       </div>
     </div>

@@ -87,8 +87,11 @@ class NumberMap {
     this.data.clear();
   }
 
-  public size(): number {
-    return this.data.size;
+  public sum(): number {
+    return Array.from(this.data, ([_key, value]) => value + 1).reduce(
+      (acc, value) => acc + value,
+      0
+    );
   }
 }
 
@@ -410,7 +413,7 @@ export class PeriodicLozengeTiling {
   }
 
   public getPeriodBoxCount() {
-    return this.data.size();
+    return this.data.sum();
   }
 
   //normalize(x,y,z): (x,y,z) - (y div yShift)(xShift,yShift,-zHeight)
