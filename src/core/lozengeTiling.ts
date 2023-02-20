@@ -153,12 +153,17 @@ export class PeriodicLozengeTiling {
   private getHeight(x: number, y: number) {
     const [nx, ny] = this.normalize(x, y, 0);
     const savedHeight = this.data.get(nx, ny);
+    const { xShift, yShift, zHeight } = this.periods;
 
-    return nx >= 0
-      ? savedHeight
-      : savedHeight +
-          this.periods.zHeight *
-            (Math.floor((-nx - 1) / this.periods.xShift) + 1);
+    if (yShift >= xShift) {
+      return nx >= 0
+        ? savedHeight
+        : savedHeight + zHeight * (Math.floor((-nx - 1) / xShift) + 1);
+    } else {
+      return ny >= 0
+        ? savedHeight
+        : savedHeight + zHeight * (Math.floor((-ny - 1) / yShift) + 1);
+    }
   }
 
   private incrementHeight(x: number, y: number) {
