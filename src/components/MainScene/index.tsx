@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Vector3Tuple } from 'three';
 import {
+  selectBoxCountsAverage,
   selectPeriodBoxCount,
   selectVoxelPositions,
 } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
@@ -71,6 +72,7 @@ function MainScene() {
   const { walls, boxes } = useAppSelector(selectVoxelPositions);
 
   const totalBoxCount = useAppSelector(selectPeriodBoxCount);
+  const boxCountsAverage = useAppSelector(selectBoxCountsAverage);
 
   return (
     <div
@@ -125,7 +127,8 @@ function MainScene() {
             padding: 10px;
           `}
         >
-          <>Box count: {totalBoxCount}</>
+          <div>Count: {totalBoxCount}</div>
+          <div>Avg: {boxCountsAverage} </div>
         </Paper>
       </div>
     </div>

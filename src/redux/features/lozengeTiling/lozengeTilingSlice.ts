@@ -14,6 +14,7 @@ interface LozengeTilingState {
   q: number;
   drawDistance: DrawDistance;
   canGenerate: boolean;
+  boxCounts: number[];
   walls: Vector3Tuple[];
   boxes: Vector3Tuple[];
 }
@@ -42,6 +43,7 @@ const initialState: LozengeTilingState = {
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
   canGenerate: true,
+  boxCounts: [],
   walls: lozengeTiling.getWallVoxels(),
   boxes: [],
 };
@@ -54,6 +56,7 @@ export const lozengeTilingSlice = createSlice({
       lozengeTiling.reset();
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = lozengeTiling.getBoxVoxels();
+      state.boxCounts = [];
     },
     periodUpdated: (
       state,
@@ -63,6 +66,7 @@ export const lozengeTilingSlice = createSlice({
       lozengeTiling.setPeriods(state.periods);
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = [];
+      state.boxCounts = [];
     },
     drawDistanceUpdated: (
       state,
@@ -88,10 +92,12 @@ export const lozengeTilingSlice = createSlice({
     },
     generateByAddingOnly: (state) => {
       lozengeTiling.generateByAddingOnly(state.iterations);
+      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
       state.boxes = lozengeTiling.getBoxVoxels();
     },
     generateWithMarkovChain: (state) => {
       lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
+      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
       state.boxes = lozengeTiling.getBoxVoxels();
     },
     addRandomBox: (state) => {
@@ -144,6 +150,15 @@ export const selectVoxelPositions = (state: RootState) => {
 
 export const selectPeriodBoxCount = () => {
   return lozengeTiling.getPeriodBoxCount();
+};
+
+export const selectBoxCountsAverage = (state: RootState) => {
+  const { boxCounts } = state.lozengeTiling;
+  if (boxCounts.length === 0) {
+    return 0;
+  }
+  const sum = boxCounts.reduce((a, b) => a + b, 0);
+  return sum / boxCounts.length;
 };
 
 const { actions, reducer } = lozengeTilingSlice;
