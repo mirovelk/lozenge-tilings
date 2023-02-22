@@ -33,11 +33,9 @@ const helpersSize = 10000;
 function VoxelInstances({
   voxels,
   map,
-  transparent = false,
 }: {
   voxels: Vector3Tuple[];
   map: THREE.Texture;
-  transparent?: boolean;
 }) {
   const boxInstancedMeshRef: React.Ref<
     THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
@@ -63,11 +61,7 @@ function VoxelInstances({
         args={[undefined, undefined, voxels.length]}
       >
         <boxBufferGeometry args={[voxelSize, voxelSize, voxelSize]} />
-        <meshStandardMaterial
-          map={map}
-          opacity={0.8}
-          transparent={transparent}
-        />
+        <meshStandardMaterial map={map} />
       </instancedMesh>
     </>
   );
@@ -109,11 +103,7 @@ function MainScene() {
           <VoxelInstances voxels={walls} map={boxTextureBlue} />
         )}
         {boxes.length > 0 && (
-          <VoxelInstances
-            voxels={boxes}
-            map={boxTextureRed}
-            transparent={true}
-          />
+          <VoxelInstances voxels={boxes} map={boxTextureRed} />
         )}
         <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
           <GizmoViewport
