@@ -92,7 +92,7 @@ function MainScene() {
         <color attach="background" args={['#dfdfdf']} />
         <ambientLight color="#777777" />
         <directionalLight
-          position={[helpersSize, helpersSize * 4, helpersSize * 2]}
+          position={[helpersSize, helpersSize * 3, helpersSize * 6]}
         />
         {/* <gridHelper
           args={[helpersSize, helpersSize / voxelSize, '#777777', '#b1b1b1']}
