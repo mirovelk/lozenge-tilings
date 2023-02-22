@@ -107,6 +107,12 @@ export interface LozengeTilingPeriods {
   zHeight: number;
 }
 
+export interface DrawDistance {
+  x: number;
+  y: number;
+  z: number;
+}
+
 //    z
 //    |
 //    +-- y
@@ -116,8 +122,7 @@ export interface LozengeTilingPeriods {
 // periodicity [x,y,z] ~ [x-xShift, y-yShift, z+zHeight]
 export class PeriodicLozengeTiling {
   private data = new NumberMap();
-  private drawDistance: number;
-  private infinityDrawDistance = 30;
+  private drawDistance: DrawDistance;
 
   private periods: LozengeTilingPeriods;
   private addableBoxes: Vector3TupleSet = new Vector3TupleSet([[0, 0, 0]]);
@@ -125,12 +130,10 @@ export class PeriodicLozengeTiling {
 
   constructor(
     initialPeriods: LozengeTilingPeriods,
-    drawDistance: number,
-    infinityDrawDistance: number
+    drawDistance: DrawDistance
   ) {
-    this.periods = initialPeriods;
-    this.drawDistance = drawDistance;
-    this.infinityDrawDistance = infinityDrawDistance;
+    this.periods = { ...initialPeriods };
+    this.drawDistance = { ...drawDistance };
   }
 
   public reset() {
@@ -145,12 +148,8 @@ export class PeriodicLozengeTiling {
     this.reset();
   }
 
-  public setDrawDistance(drawDistance: number) {
-    this.drawDistance = drawDistance;
-  }
-
-  public setInfinityDrawDistance(infinityDrawDistance: number) {
-    this.infinityDrawDistance = infinityDrawDistance;
+  public setDrawDistance(drawDistance: Partial<DrawDistance>) {
+    this.drawDistance = { ...this.drawDistance, ...drawDistance };
   }
 
   private addAddableBox(x: number, y: number, z: number) {
@@ -357,28 +356,21 @@ export class PeriodicLozengeTiling {
   }
 
   private getVoxelBoundaries() {
-    const infinityDrawDistance = this.infinityDrawDistance;
     const drawDistance = this.drawDistance;
     const { xShift, yShift, zHeight } = this.periods;
-    const xHalfWidth =
-      xShift > 0 ? xShift * drawDistance : infinityDrawDistance;
-    const yHalfWidth =
-      yShift > 0 ? yShift * drawDistance : infinityDrawDistance;
-    const zHalfWidth =
-      zHeight > 0 ? zHeight * drawDistance : infinityDrawDistance;
 
     return {
       bondX: {
-        start: xShift === 0 ? -1 : -xHalfWidth,
-        end: +xHalfWidth,
+        start: xShift === 0 ? -1 : -drawDistance.x,
+        end: +drawDistance.x,
       },
       bondY: {
-        start: yShift === 0 ? -1 : -yHalfWidth,
-        end: +yHalfWidth,
+        start: yShift === 0 ? -1 : -drawDistance.y,
+        end: +drawDistance.y,
       },
       bondZ: {
-        start: zHeight === 0 ? -1 : -zHalfWidth,
-        end: +zHalfWidth,
+        start: zHeight === 0 ? -1 : -drawDistance.z,
+        end: +drawDistance.z,
       },
     };
   }

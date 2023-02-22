@@ -3,6 +3,7 @@ import { Vector3Tuple } from 'three';
 import {
   PeriodicLozengeTiling,
   LozengeTilingPeriods,
+  DrawDistance,
 } from '../../../core/lozengeTiling';
 
 import { RootState } from '../../store';
@@ -11,15 +12,17 @@ interface LozengeTilingState {
   periods: LozengeTilingPeriods;
   iterations: number;
   q: number;
-  drawDistance: number;
-  infinityDrawDistance: number;
+  drawDistance: DrawDistance;
   canGenerate: boolean;
   walls: Vector3Tuple[];
   boxes: Vector3Tuple[];
 }
 
-const initialDrawDistance = 4;
-const initialInfinityDrawDistance = 30;
+const initialDrawDistance: DrawDistance = {
+  x: 10,
+  y: 10,
+  z: 10,
+};
 
 const initialPeriods = {
   xShift: 1,
@@ -30,8 +33,7 @@ const initialPeriods = {
 // using a separate class instance to keep track of tyling data
 const lozengeTiling = new PeriodicLozengeTiling(
   initialPeriods,
-  initialDrawDistance,
-  initialInfinityDrawDistance
+  initialDrawDistance
 );
 
 const initialState: LozengeTilingState = {
@@ -39,7 +41,6 @@ const initialState: LozengeTilingState = {
   iterations: 10,
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
-  infinityDrawDistance: initialInfinityDrawDistance,
   canGenerate: true,
   walls: lozengeTiling.getWallVoxels(),
   boxes: [],
@@ -65,21 +66,11 @@ export const lozengeTilingSlice = createSlice({
     },
     drawDistanceUpdated: (
       state,
-      action: PayloadAction<{ drawDistance: number }>
+      action: PayloadAction<Partial<DrawDistance>>
     ) => {
-      const { drawDistance } = action.payload;
+      const drawDistance = action.payload;
       lozengeTiling.setDrawDistance(drawDistance);
-      state.drawDistance = drawDistance;
-      state.walls = lozengeTiling.getWallVoxels();
-      state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
-    },
-    infinityDrawDistanceUpdated: (
-      state,
-      action: PayloadAction<{ infinityDrawDistance: number }>
-    ) => {
-      const { infinityDrawDistance } = action.payload;
-      lozengeTiling.setInfinityDrawDistance(infinityDrawDistance);
-      state.infinityDrawDistance = infinityDrawDistance;
+      state.drawDistance = { ...state.drawDistance, ...drawDistance };
       state.walls = lozengeTiling.getWallVoxels();
       state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
     },
@@ -132,11 +123,6 @@ export const selectDrawDistance = (state: RootState) => {
   return drawDistance;
 };
 
-export const selectInfinityDrawDistance = (state: RootState) => {
-  const { infinityDrawDistance } = state.lozengeTiling;
-  return infinityDrawDistance;
-};
-
 export const selectIterations = (state: RootState) => {
   const { iterations } = state.lozengeTiling;
   return iterations;
@@ -173,7 +159,6 @@ export const {
   removeRandomBox,
   qUpdated,
   drawDistanceUpdated,
-  infinityDrawDistanceUpdated,
 } = actions;
 
 export default reducer;

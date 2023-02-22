@@ -17,7 +17,6 @@ import {
   drawDistanceUpdated,
   generateByAddingOnly,
   generateWithMarkovChain,
-  infinityDrawDistanceUpdated,
   iterationsUpdated,
   periodUpdated,
   qUpdated,
@@ -26,7 +25,6 @@ import {
   selectCanGenerate,
   selectCanRemoveBox,
   selectDrawDistance,
-  selectInfinityDrawDistance,
   selectIterations,
   selectPeriods,
   selectQ,
@@ -61,7 +59,6 @@ function App() {
   const periods = useAppSelector(selectPeriods);
   const q = useAppSelector(selectQ);
   const drawDistance = useAppSelector(selectDrawDistance);
-  const infinityDrawDistance = useAppSelector(selectInfinityDrawDistance);
 
   const [markovChain, setMarkovChain] = useState(true);
 
@@ -103,16 +100,23 @@ function App() {
     [dispatch]
   );
 
-  const onDrawDistanceChange = useCallback(
-    (drawDistance: number) => {
-      dispatch(drawDistanceUpdated({ drawDistance }));
+  const onDrawDistanceXChange = useCallback(
+    (x: number) => {
+      dispatch(drawDistanceUpdated({ x }));
     },
     [dispatch]
   );
 
-  const onInfinityDrawDistanceChange = useCallback(
-    (infinityDrawDistance: number) => {
-      dispatch(infinityDrawDistanceUpdated({ infinityDrawDistance }));
+  const onDrawDistanceYChange = useCallback(
+    (y: number) => {
+      dispatch(drawDistanceUpdated({ y }));
+    },
+    [dispatch]
+  );
+
+  const onDrawDistanceZChange = useCallback(
+    (z: number) => {
+      dispatch(drawDistanceUpdated({ z }));
     },
     [dispatch]
   );
@@ -310,16 +314,17 @@ function App() {
                 <div
                   css={css`
                     margin: 0 10px 0 30px;
+                    white-space: nowrap;
                   `}
                 >
-                  Draw:
+                  Draw dist:
                 </div>
 
                 <ConfigNumberInputWithLabel
-                  label="reps:"
-                  initialValue={drawDistance}
+                  label="x:"
+                  initialValue={drawDistance.x}
                   inputValueValid={isInputValueValidDrawDistance}
-                  onValidChange={onDrawDistanceChange}
+                  onValidChange={onDrawDistanceXChange}
                   inputProps={{
                     step: '1',
                     min: '1',
@@ -329,10 +334,23 @@ function App() {
                   `}
                 />
                 <ConfigNumberInputWithLabel
-                  label="infinity:"
-                  initialValue={infinityDrawDistance}
+                  label="y:"
+                  initialValue={drawDistance.y}
                   inputValueValid={isInputValueValidDrawDistance}
-                  onValidChange={onInfinityDrawDistanceChange}
+                  onValidChange={onDrawDistanceYChange}
+                  inputProps={{
+                    step: '1',
+                    min: '1',
+                  }}
+                  css={css`
+                    margin-right: 10px;
+                  `}
+                />
+                <ConfigNumberInputWithLabel
+                  label="z:"
+                  initialValue={drawDistance.z}
+                  inputValueValid={isInputValueValidDrawDistance}
+                  onValidChange={onDrawDistanceZChange}
                   inputProps={{
                     step: '1',
                     min: '1',
