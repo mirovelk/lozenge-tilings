@@ -355,35 +355,53 @@ export class PeriodicLozengeTiling {
     }
   }
 
-  private getVoxelBoundaries() {
+  private getVoxelBoundaries(): {
+    distX: { min: number; max: number };
+    distY: { min: number; max: number };
+    distZ: { min: number; max: number };
+  } {
     const drawDistance = this.drawDistance;
     const { xShift, yShift, zHeight } = this.periods;
 
     return {
-      bondX: {
-        start: xShift === 0 ? -1 : -drawDistance.x,
-        end: +drawDistance.x,
+      distX: {
+        min: xShift === 0 ? -1 : -drawDistance.x,
+        max: +drawDistance.x,
       },
-      bondY: {
-        start: yShift === 0 ? -1 : -drawDistance.y,
-        end: +drawDistance.y,
+      distY: {
+        min: yShift === 0 ? -1 : -drawDistance.y,
+        max: +drawDistance.y,
       },
-      bondZ: {
-        start: zHeight === 0 ? -1 : -drawDistance.z,
-        end: +drawDistance.z,
+      distZ: {
+        min: zHeight === 0 ? -1 : -drawDistance.z,
+        max: +drawDistance.z,
       },
     };
   }
 
   private getVoxels(match: (x: number, y: number, z: number) => boolean) {
     const voxels: Vector3Tuple[] = [];
-    const { bondX, bondY, bondZ } = this.getVoxelBoundaries();
+    const { distX, distY, distZ } = this.getVoxelBoundaries();
 
-    for (let x = bondX.start; x < bondX.end; x++) {
-      for (let y = bondY.start; y < bondY.end; y++) {
-        for (let z = bondZ.start; z < bondZ.end; z++) {
+    for (let x = distX.min; x < distX.max; x++) {
+      for (let y = distY.min; y < distY.max; y++) {
+        for (let z = distZ.min; z < distZ.max; z++) {
           if (match(x, y, z)) {
-            voxels.push([x, y, z]);
+            if (
+              // matched on edge
+              x === distX.min ||
+              y === distY.min ||
+              z === distZ.min ||
+              x === distX.max - 1 ||
+              y === distY.max - 1 ||
+              z === distZ.max - 1 ||
+              // or matched not surrounded on any side
+              !match(x + 1, y, z) ||
+              !match(x, y + 1, z) ||
+              !match(x, y, z + 1)
+            ) {
+              voxels.push([x, y, z]);
+            }
           }
         }
       }
