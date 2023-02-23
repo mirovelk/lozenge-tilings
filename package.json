@@ -76,6 +76,7 @@
     "serve": "serve build -l 8080",
     "deploy": "gh-pages -d build",
     "publish": "npm run build && npm run deploy",
+    "profile": "npm run build && npm run serve",
     "test": "jest"
   },
   "engines": {
