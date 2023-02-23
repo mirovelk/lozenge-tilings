@@ -387,6 +387,9 @@ export class PeriodicLozengeTiling {
       for (let y = distY.min; y < distY.max; y++) {
         for (let z = distZ.min; z < distZ.max; z++) {
           if (match(x, y, z)) {
+            const boxToLeft = match(x + 1, y, z);
+            const boxToRight = match(x, y + 1, z);
+            const boxAbove = match(x, y, z + 1);
             if (
               // matched on edge
               x === distX.min ||
@@ -395,12 +398,15 @@ export class PeriodicLozengeTiling {
               x === distX.max - 1 ||
               y === distY.max - 1 ||
               z === distZ.max - 1 ||
-              // or matched not surrounded on any side
-              !match(x + 1, y, z) ||
-              !match(x, y + 1, z) ||
-              !match(x, y, z + 1)
+              // or matched not covered on some side
+              !boxToLeft ||
+              !boxToRight ||
+              !boxAbove
             ) {
               voxels.push([x, y, z]);
+              if (!boxAbove) {
+                break;
+              }
             }
           }
         }
