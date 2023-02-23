@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, freeze, PayloadAction } from '@reduxjs/toolkit';
 import { Vector3Tuple } from 'three';
 import {
   PeriodicLozengeTiling,
@@ -44,7 +44,7 @@ const initialState: LozengeTilingState = {
   drawDistance: initialDrawDistance,
   canGenerate: true,
   boxCounts: [],
-  walls: lozengeTiling.getWallVoxels(),
+  walls: freeze(lozengeTiling.getWallVoxels()),
   boxes: [],
 };
 
@@ -54,8 +54,8 @@ export const lozengeTilingSlice = createSlice({
   reducers: {
     reset: (state) => {
       lozengeTiling.reset();
-      state.walls = lozengeTiling.getWallVoxels();
-      state.boxes = lozengeTiling.getBoxVoxels();
+      state.walls = freeze(lozengeTiling.getWallVoxels());
+      state.boxes = freeze(lozengeTiling.getBoxVoxels());
       state.boxCounts = [];
     },
     periodUpdated: (
@@ -64,7 +64,7 @@ export const lozengeTilingSlice = createSlice({
     ) => {
       state.periods = { ...state.periods, ...action.payload };
       lozengeTiling.setPeriods(state.periods);
-      state.walls = lozengeTiling.getWallVoxels();
+      state.walls = freeze(lozengeTiling.getWallVoxels());
       state.boxes = [];
       state.boxCounts = [];
     },
@@ -75,8 +75,9 @@ export const lozengeTilingSlice = createSlice({
       const drawDistance = action.payload;
       lozengeTiling.setDrawDistance(drawDistance);
       state.drawDistance = { ...state.drawDistance, ...drawDistance };
-      state.walls = lozengeTiling.getWallVoxels();
-      state.boxes = state.boxes.length > 0 ? lozengeTiling.getBoxVoxels() : [];
+      state.walls = freeze(lozengeTiling.getWallVoxels());
+      state.boxes =
+        state.boxes.length > 0 ? freeze(lozengeTiling.getBoxVoxels()) : [];
     },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
@@ -93,21 +94,22 @@ export const lozengeTilingSlice = createSlice({
     generateByAddingOnly: (state) => {
       lozengeTiling.generateByAddingOnly(state.iterations);
       state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-      state.boxes = lozengeTiling.getBoxVoxels();
+      state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     generateWithMarkovChain: (state) => {
       lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
       state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-      state.boxes = lozengeTiling.getBoxVoxels();
+      state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
-      state.boxes = lozengeTiling.getBoxVoxels();
+      state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     removeRandomBox: (state) => {
-      if (state.boxes.length > 1) {
+      // TODO save getPeriodBoxCount() to state
+      if (lozengeTiling.getPeriodBoxCount() > 1) {
         lozengeTiling.removeRandomBox();
-        state.boxes = lozengeTiling.getBoxVoxels();
+        state.boxes = freeze(lozengeTiling.getBoxVoxels());
       }
     },
   },
