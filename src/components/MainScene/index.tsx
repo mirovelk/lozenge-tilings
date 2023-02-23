@@ -2,78 +2,13 @@ import { css } from '@emotion/react';
 import { Paper } from '@mui/material';
 import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { Vector3Tuple } from 'three';
-import {
-  selectBoxCountsAverage,
-  selectPeriodBoxCount,
-  selectVoxelPositions,
-} from '../../redux/features/lozengeTiling/lozengeTilingSlice';
-import { useAppSelector } from '../../redux/store';
-import edgeRed from './edgeRed.png';
-import edgeBlue from './edgeBlue.png';
 
-const boxTextureRed = new THREE.TextureLoader().load(edgeRed);
-const boxTextureBlue = new THREE.TextureLoader().load(edgeBlue);
-
-const voxelSize = 50;
-
-function alignToGrid(
-  position: [number, number, number]
-): [number, number, number] {
-  return [
-    voxelSize * position[0] + voxelSize / 2,
-    voxelSize * position[1] + voxelSize / 2,
-    voxelSize * position[2] + voxelSize / 2,
-  ];
-}
+import Boxes from './Boxes';
+import Counters from './Counters';
 
 const helpersSize = 10000;
 
-function VoxelInstances({
-  voxels,
-  map,
-}: {
-  voxels: Vector3Tuple[];
-  map: THREE.Texture;
-}) {
-  const boxInstancedMeshRef: React.Ref<
-    THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
-  > | null = useRef(null);
-
-  useEffect(() => {
-    if (boxInstancedMeshRef.current) {
-      const matrix = new THREE.Matrix4();
-      // Set positions
-      for (let i = 0; i < voxels.length; i++) {
-        matrix.setPosition(...alignToGrid(voxels[i]));
-        boxInstancedMeshRef?.current?.setMatrixAt(i, matrix);
-      }
-      // Update the instance
-      boxInstancedMeshRef.current.instanceMatrix.needsUpdate = true;
-    }
-  }, [voxels]);
-
-  return (
-    <>
-      <instancedMesh
-        ref={boxInstancedMeshRef}
-        args={[undefined, undefined, voxels.length]}
-      >
-        <boxBufferGeometry args={[voxelSize, voxelSize, voxelSize]} />
-        <meshStandardMaterial map={map} />
-      </instancedMesh>
-    </>
-  );
-}
-
 function MainScene() {
-  const { walls, boxes } = useAppSelector(selectVoxelPositions);
-
-  const totalBoxCount = useAppSelector(selectPeriodBoxCount);
-  const boxCountsAverage = useAppSelector(selectBoxCountsAverage);
-
   return (
     <div
       css={css`
@@ -101,12 +36,7 @@ function MainScene() {
           rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
         /> */}
         {/* <axesHelper args={[helpersSize]} /> */}
-        {walls.length > 0 && (
-          <VoxelInstances voxels={walls} map={boxTextureBlue} />
-        )}
-        {boxes.length > 0 && (
-          <VoxelInstances voxels={boxes} map={boxTextureRed} />
-        )}
+        <Boxes />
         <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
           <GizmoViewport
             axisColors={['#9d4b4b', '#3b5b9d', '#2f7f4f']}
@@ -127,8 +57,7 @@ function MainScene() {
             padding: 10px;
           `}
         >
-          <div>Count: {totalBoxCount}</div>
-          <div>Avg: {boxCountsAverage} </div>
+          <Counters />
         </Paper>
       </div>
     </div>
