@@ -103,12 +103,13 @@ export const lozengeTilingSlice = createSlice({
     },
     addRandomBox: (state) => {
       lozengeTiling.addRandomBox();
+      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
       state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     removeRandomBox: (state) => {
-      // TODO save getPeriodBoxCount() to state
       if (lozengeTiling.getPeriodBoxCount() > 1) {
         lozengeTiling.removeRandomBox();
+        state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
         state.boxes = freeze(lozengeTiling.getBoxVoxels());
       }
     },
@@ -141,8 +142,9 @@ export const selectCanGenerate = (state: RootState) => {
   return canGenerate;
 };
 
-export const selectCanRemoveBox = () => {
-  return lozengeTiling.getPeriodBoxCount() > 0;
+export const selectCanRemoveBox = (state: RootState) => {
+  const { boxCounts } = state.lozengeTiling;
+  return boxCounts.length > 0;
 };
 
 export const selectVoxelPositions = (state: RootState) => {
@@ -150,8 +152,9 @@ export const selectVoxelPositions = (state: RootState) => {
   return { walls, boxes };
 };
 
-export const selectPeriodBoxCount = () => {
-  return lozengeTiling.getPeriodBoxCount();
+export const selectPeriodBoxCount = (state: RootState) => {
+  const { boxCounts } = state.lozengeTiling;
+  return boxCounts.length > 0 ? boxCounts[boxCounts.length - 1] : 0;
 };
 
 export const selectBoxCountsAverage = (state: RootState) => {
