@@ -13,13 +13,10 @@ class Vector3TupleSet {
   }
 
   private vectorsEqual(a: Vector3Tuple, b: Vector3Tuple) {
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return false;
-    }
-    return true;
+    return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
   }
 
-  public has(vector: Vector3Tuple): boolean {
+  private has(vector: Vector3Tuple): boolean {
     for (let i = 0; i < this.vectorList.length; i++) {
       if (this.vectorsEqual(this.vectorList[i], vector)) {
         return true;
@@ -34,14 +31,10 @@ class Vector3TupleSet {
     }
   }
 
-  public delete(vector: Vector3Tuple): boolean {
-    for (let i = 0; i < this.vectorList.length; i++) {
-      if (this.vectorsEqual(this.vectorList[i], vector)) {
-        this.vectorList.splice(i, 1);
-        return true;
-      }
-    }
-    return false;
+  public delete(vector: Vector3Tuple): void {
+    this.vectorList = this.vectorList.filter(
+      (v) => !this.vectorsEqual(v, vector)
+    );
   }
 
   public getRandom(): Vector3Tuple {
