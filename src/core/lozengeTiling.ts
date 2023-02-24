@@ -379,7 +379,10 @@ export class PeriodicLozengeTiling {
     };
   }
 
-  private getVoxels(match: (x: number, y: number, z: number) => boolean) {
+  private getVoxels(
+    match: (x: number, y: number, z: number) => boolean,
+    includeEdges: boolean
+  ) {
     const voxels: Vector3Tuple[] = [];
     const { distX, distY, distZ } = this.getVoxelBoundaries();
 
@@ -392,12 +395,13 @@ export class PeriodicLozengeTiling {
             const boxAbove = match(x, y, z + 1);
             if (
               // matched on edge
-              x === distX.min ||
-              y === distY.min ||
-              z === distZ.min ||
-              x === distX.max - 1 ||
-              y === distY.max - 1 ||
-              z === distZ.max - 1 ||
+              (includeEdges &&
+                (x === distX.min ||
+                  y === distY.min ||
+                  z === distZ.min ||
+                  x === distX.max - 1 ||
+                  y === distY.max - 1 ||
+                  z === distZ.max - 1)) ||
               // or matched not covered on some side
               !boxToLeft ||
               !boxToRight ||
@@ -418,13 +422,13 @@ export class PeriodicLozengeTiling {
 
   public getWallVoxels() {
     return withDurationLogging('wall', () => {
-      return this.getVoxels(this.isWall.bind(this));
+      return this.getVoxels(this.isWall.bind(this), false);
     });
   }
 
   public getBoxVoxels() {
     return withDurationLogging('boxes', () => {
-      return this.getVoxels(this.isBox.bind(this));
+      return this.getVoxels(this.isBox.bind(this), true);
     });
   }
 
