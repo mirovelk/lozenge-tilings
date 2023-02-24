@@ -43,7 +43,7 @@ function MainScene() {
             labelColor="white"
           />
         </GizmoHelper>
-        <OrbitControls makeDefault />
+        <OrbitControls makeDefault enableDamping={false} />
       </Canvas>
       <div
         css={css`
