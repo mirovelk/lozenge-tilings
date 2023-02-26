@@ -121,19 +121,11 @@ impl PeriodicLozengeTiling {
 
         let Vector3(x, y, z) = vector;
 
-        // original
-        // let shift = if self.periods.y_shift >= self.periods.x_shift {
-        //     y / self.periods.y_shift
-        // } else {
-        //     x / self.periods.x_shift
-        // };
-
-        // TODO is this correct?
         // xShift != 0 || yShift != 0
         let shift = if y_shift >= x_shift {
-            (f64::from(*y) / f64::from(y_shift)).floor() as i32
+            y.div_euclid(y_shift)
         } else {
-            (f64::from(*x) / f64::from(x_shift)).floor() as i32
+            x.div_euclid(x_shift)
         };
 
         Vector3(
@@ -214,13 +206,6 @@ impl PeriodicLozengeTiling {
         if nz < 0 {
             return true;
         }
-
-        // return (
-        //     nz < 0 ||
-        //     (this.periods.yShift >= this.periods.xShift
-        //       ? nx < -Math.floor(nz / this.periods.zHeight) * this.periods.xShift
-        //       : ny < -Math.floor(nz / this.periods.zHeight) * this.periods.yShift)
-        //   );
 
         if y_shift >= x_shift {
             nx < -(nz / z_height) * x_shift
