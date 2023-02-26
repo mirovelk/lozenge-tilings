@@ -176,19 +176,15 @@ impl PeriodicLozengeTiling {
             z_height,
         } = self.periods;
 
-        // TODO use match
-        if y_shift >= x_shift {
-            if *nx >= 0 {
-                *saved_height
-            } else {
-                saved_height + z_height * ((-nx - 1) / x_shift + 1)
-            }
-        } else {
-            if *ny >= 0 {
-                *saved_height
-            } else {
-                saved_height + z_height * ((-ny - 1) / y_shift + 1)
-            }
+        match y_shift >= x_shift {
+            true => match *nx >= 0 {
+                true => *saved_height,
+                false => saved_height + z_height * ((-nx - 1) / x_shift + 1),
+            },
+            false => match *ny >= 0 {
+                true => *saved_height,
+                false => saved_height + z_height * ((-ny - 1) / y_shift + 1),
+            },
         }
     }
 
