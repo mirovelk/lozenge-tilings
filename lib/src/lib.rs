@@ -477,22 +477,25 @@ impl PeriodicLozengeTiling {
         })
     }
 
-    #[wasm_bindgen(js_name = generateWithMarkovChain)]
     pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
-        time!("generate_with_markov_chain", {
-            for _ in 0..iterations {
-                let rnd1 = (-1.0 * (1.0 - rand::random::<f32>()).ln())
-                    / self.addable_boxes_count() as f32
-                    / q;
-                let rnd2 = (-1.0 * (1.0 - rand::random::<f32>()).ln())
-                    / self.removable_boxes_count() as f32;
+        for _ in 0..iterations {
+            let rnd1 =
+                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.addable_boxes_count() as f32 / q;
+            let rnd2 =
+                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.removable_boxes_count() as f32;
 
-                if rnd1 < rnd2 {
-                    self.add_random_box();
-                } else {
-                    self.remove_random_box();
-                }
+            if rnd1 < rnd2 {
+                self.add_random_box();
+            } else {
+                self.remove_random_box();
             }
+        }
+    }
+
+    #[wasm_bindgen(js_name = generateWithMarkovChain)]
+    pub fn generate_with_markov_chain_js(&mut self, iterations: i32, q: f32) {
+        time!("generate_with_markov_chain_js", {
+            self.generate_with_markov_chain(iterations, q)
         })
     }
 }
