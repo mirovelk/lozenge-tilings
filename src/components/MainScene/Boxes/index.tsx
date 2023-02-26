@@ -51,7 +51,7 @@ function VoxelInstances({
         ref={boxInstancedMeshRef}
         args={[undefined, undefined, voxels.length]}
       >
-        <boxBufferGeometry args={[voxelSize, voxelSize, voxelSize]} />
+        <boxGeometry args={[voxelSize, voxelSize, voxelSize]} />
         <meshStandardMaterial map={map} />
       </instancedMesh>
     </>
