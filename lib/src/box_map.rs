@@ -21,19 +21,24 @@ impl BoxMap {
         }
     }
 
-    pub fn get(&self, position: Vector2) -> &i32 {
-        self.data.get(&position).unwrap_or(&FLOOR_HEIGHT)
+    pub fn get(&self, position: &Vector2) -> &i32 {
+        self.data.get(position).unwrap_or(&FLOOR_HEIGHT)
+    }
+    pub fn increment(&mut self, position: &Vector2) {
+        *self.data.entry(*position).or_insert(FLOOR_HEIGHT) += 1
     }
 
-    pub fn set(&mut self, position: Vector2, height: i32) {
-        if height < FLOOR_HEIGHT {
-            panic!("Height must be greater than or equal to -1");
-        }
-        if height == FLOOR_HEIGHT {
-            // this can panic if not found but that should not happen
-            self.data.remove(&position);
-        } else {
-            self.data.insert(position, height);
+    pub fn decrement(&mut self, position: &Vector2) {
+        match self.data.get_mut(position) {
+            Some(value) => {
+                *value -= 1;
+                if *value == -1 {
+                    self.data.remove(position);
+                }
+            }
+            None => {
+                panic!("Tried to decrement non-existent value");
+            }
         }
     }
 
@@ -52,38 +57,47 @@ mod tests {
     use crate::vector2::Vector2;
 
     #[test]
-    fn can_set_and_get_height() {
+    fn get_returns_minus_1_for_new_position() {
+        let map = BoxMap::new();
+        assert_eq!(map.get(&Vector2(0, 0)), &-1);
+    }
+
+    #[test]
+    fn can_increment_height_of_new_position() {
         let mut map = BoxMap::new();
-        map.set(Vector2(1, 2), 3);
-        assert_eq!(map.get(Vector2(1, 2)), &3);
+        let position = Vector2(0, 0);
+        assert_eq!(map.get(&position), &-1);
+        map.increment(&position);
+        assert_eq!(map.get(&position), &0);
+    }
+
+    #[test]
+    fn can_increment_height_of_existing_position() {
+        let mut map = BoxMap::new();
+        let position = Vector2(0, 0);
+        map.increment(&position);
+        assert_eq!(map.get(&position), &0);
+        map.increment(&position);
+        assert_eq!(map.get(&position), &1);
     }
 
     #[test]
     fn height_0_is_counted_as_a_box() {
         let mut map = BoxMap::new();
-        map.set(Vector2(0, 0), 0);
-        map.set(Vector2(0, 1), 0);
-        assert_eq!(map.box_count(), 2);
-    }
-
-    #[test]
-    fn height_minus_1_is_not_counted_as_a_box() {
-        let mut map = BoxMap::new();
-        map.set(Vector2(0, 0), 0);
-        map.set(Vector2(0, 1), 0);
-        map.set(Vector2(0, 1), -1);
+        let position = Vector2(0, 0);
+        map.increment(&position);
+        assert_eq!(*map.data.get(&position).unwrap(), 0);
         assert_eq!(map.box_count(), 1);
     }
 
     #[test]
-    fn removes_items_from_map_when_set_to_minus_1() {
+    fn decremented_boxes_to_height_mins_1_are_counted_as_a_box() {
         let mut map = BoxMap::new();
-        map.set(Vector2(1, 2), 3);
-        assert_eq!(map.get(Vector2(1, 2)), &3);
-        assert_eq!(map.data.len(), 1);
+        map.increment(&Vector2(0, 0));
+        map.increment(&Vector2(0, 1));
+        assert_eq!(map.box_count(), 2);
 
-        map.set(Vector2(1, 2), -1);
-        assert_eq!(map.get(Vector2(1, 2)), &-1);
-        assert_eq!(map.data.len(), 0);
+        map.decrement(&Vector2(0, 1));
+        assert_eq!(map.box_count(), 1);
     }
 }

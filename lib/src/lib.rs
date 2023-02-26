@@ -165,9 +165,11 @@ impl PeriodicLozengeTiling {
         self.removable_boxes.remove(&self.normalize3(vector));
     }
 
-    fn get_height(&self, vector: &Vector2) -> i32 {
-        let Vector2(nx, ny) = self.normalize2(vector);
-        let saved_height = self.data.get(Vector2(nx, ny));
+    fn get_height(&self, normalized_vector: &Vector2) -> i32 {
+        let saved_height = self.data.get(normalized_vector);
+
+        let Vector2(nx, ny) = normalized_vector;
+
         let LozengeTilingPeriods {
             x_shift,
             y_shift,
@@ -176,13 +178,13 @@ impl PeriodicLozengeTiling {
 
         // TODO use match
         if y_shift >= x_shift {
-            if nx >= 0 {
+            if *nx >= 0 {
                 *saved_height
             } else {
                 saved_height + z_height * ((-nx - 1) / x_shift + 1)
             }
         } else {
-            if ny >= 0 {
+            if *ny >= 0 {
                 *saved_height
             } else {
                 saved_height + z_height * ((-ny - 1) / y_shift + 1)
@@ -190,18 +192,12 @@ impl PeriodicLozengeTiling {
         }
     }
 
-    // TODO can be moved to the BoxMap
     fn increment_height(&mut self, vector: &Vector2) {
-        let Vector2(nx, ny) = self.normalize2(vector);
-        let previous_height = self.data.get(Vector2(nx, ny));
-        self.data.set(Vector2(nx, ny), previous_height + 1);
+        self.data.increment(&self.normalize2(vector));
     }
 
-    // TODO can be moved to the BoxMap
     fn decrement_height(&mut self, vector: &Vector2) {
-        let Vector2(nx, ny) = self.normalize2(vector);
-        let previous_height = self.data.get(Vector2(nx, ny));
-        self.data.set(Vector2(nx, ny), previous_height - 1);
+        self.data.decrement(&self.normalize2(vector));
     }
 
     fn is_wall(&self, vector: &Vector3) -> bool {
