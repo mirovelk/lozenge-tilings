@@ -7,6 +7,7 @@ mod vector3_set;
 mod time;
 
 use crate::{vector2::Vector2, vector3_set::Vector3Set};
+
 use box_map::BoxMap;
 use rand::Rng;
 use vector3::Vector3;
@@ -14,7 +15,6 @@ use wasm_bindgen::prelude::*;
 use web_sys::console;
 
 #[derive(Debug)]
-#[wasm_bindgen]
 pub struct DrawDistance {
     pub x: i32,
     pub y: i32,
@@ -22,13 +22,9 @@ pub struct DrawDistance {
 }
 
 #[derive(Debug)]
-#[wasm_bindgen]
 pub struct LozengeTilingPeriods {
-    #[wasm_bindgen(js_name = xShift)]
     pub x_shift: i32,
-    #[wasm_bindgen(js_name = yShift)]
     pub y_shift: i32,
-    #[wasm_bindgen(js_name = zHeight)]
     pub z_height: i32,
 }
 
