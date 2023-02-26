@@ -3,6 +3,7 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
+import WasmPackPlugin from '@wasm-tool/wasm-pack-plugin';
 
 import path from 'path';
 import StylelintPlugin from 'stylelint-webpack-plugin';
@@ -92,7 +93,7 @@ const generateConfig: WebpackConfigurationGenerator = (_env, argv) => {
       }),
       new ESLintPlugin({
         extensions: ['js', 'jsx', 'ts', 'tsx'],
-        exclude: 'node_modules',
+        exclude: ['node_modules', 'lib', 'build'],
         failOnError: isProduction,
       }),
       new StylelintPlugin({
@@ -109,12 +110,20 @@ const generateConfig: WebpackConfigurationGenerator = (_env, argv) => {
         },
         devServer: false,
       }),
+      new WasmPackPlugin({
+        crateDirectory: path.join(__dirname, 'lib'),
+        outDir: path.join(__dirname, 'build', 'lib'),
+        extraArgs: '--target web',
+      }),
     ],
     devServer: {
       hot: true,
       client: {
         overlay: false,
       },
+    },
+    experiments: {
+      topLevelAwait: true,
     },
   };
 };

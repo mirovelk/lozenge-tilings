@@ -1,7 +1,8 @@
 import { createSlice, freeze, PayloadAction } from '@reduxjs/toolkit';
 import { Vector3Tuple } from 'three';
+import initWasm, * as wasm from '../../../../build/lib';
+
 import {
-  PeriodicLozengeTiling,
   LozengeTilingPeriods,
   DrawDistance,
 } from '../../../core/lozengeTiling';
@@ -19,6 +20,8 @@ interface LozengeTilingState {
   boxes: Vector3Tuple[];
 }
 
+await initWasm();
+
 const initialDrawDistance: DrawDistance = {
   x: 10,
   y: 10,
@@ -31,10 +34,13 @@ const initialPeriods = {
   zHeight: 2,
 };
 
-// using a separate class instance to keep track of tyling data
-const lozengeTiling = new PeriodicLozengeTiling(
-  initialPeriods,
-  initialDrawDistance
+const lozengeTiling = new wasm.PeriodicLozengeTiling(
+  initialPeriods.xShift,
+  initialPeriods.yShift,
+  initialPeriods.zHeight,
+  initialDrawDistance.x,
+  initialDrawDistance.y,
+  initialDrawDistance.z
 );
 
 const initialState: LozengeTilingState = {
@@ -63,7 +69,11 @@ export const lozengeTilingSlice = createSlice({
       action: PayloadAction<Partial<LozengeTilingPeriods>>
     ) => {
       state.periods = { ...state.periods, ...action.payload };
-      lozengeTiling.setPeriods(state.periods);
+      lozengeTiling.setPeriods(
+        state.periods.xShift,
+        state.periods.yShift,
+        state.periods.zHeight
+      );
       state.walls = freeze(lozengeTiling.getWallVoxels());
       state.boxes = [];
       state.boxCounts = [];
@@ -73,8 +83,12 @@ export const lozengeTilingSlice = createSlice({
       action: PayloadAction<Partial<DrawDistance>>
     ) => {
       const drawDistance = action.payload;
-      lozengeTiling.setDrawDistance(drawDistance);
       state.drawDistance = { ...state.drawDistance, ...drawDistance };
+      lozengeTiling.setDrawDistance(
+        state.drawDistance.x,
+        state.drawDistance.y,
+        state.drawDistance.z
+      );
       state.walls = freeze(lozengeTiling.getWallVoxels());
       state.boxes =
         state.boxes.length > 0 ? freeze(lozengeTiling.getBoxVoxels()) : [];
