@@ -448,7 +448,6 @@ impl PeriodicLozengeTiling {
     }
 
     fn get_box_voxels(&self) -> Vec<Vector3> {
-        // TODO log duration
         self.get_voxels(&|vector| self.is_box(&vector), true)
     }
 
