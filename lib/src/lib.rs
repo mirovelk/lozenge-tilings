@@ -8,6 +8,7 @@ mod time;
 
 use crate::{vector2::Vector2, vector3_set::Vector3Set};
 use box_map::BoxMap;
+use rand::Rng;
 use vector3::Vector3;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -478,13 +479,16 @@ impl PeriodicLozengeTiling {
     }
 
     pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
-        for _ in 0..iterations {
-            let rnd1 =
-                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.addable_boxes_count() as f32 / q;
-            let rnd2 =
-                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.removable_boxes_count() as f32;
+        let mut rng = rand::thread_rng();
 
-            if rnd1 < rnd2 {
+        for _ in 0..iterations {
+            let rn1 = rng.gen::<f32>();
+            let rn2 = rng.gen::<f32>();
+
+            let num1 = (-1.0 * (1.0 - rn1).ln()) / self.addable_boxes_count() as f32 / q;
+            let num2 = (-1.0 * (1.0 - rn2).ln()) / self.removable_boxes_count() as f32;
+
+            if num1 < num2 {
                 self.add_random_box();
             } else {
                 self.remove_random_box();
