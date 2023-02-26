@@ -449,10 +449,12 @@ impl PeriodicLozengeTiling {
     }
 
     fn get_wall_voxels(&self) -> Vec<Vector3> {
+        // TODO log duration
         self.get_voxels(&|vector| self.is_wall(&vector), false)
     }
 
     fn get_box_voxels(&self) -> Vec<Vector3> {
+        // TODO log duration
         self.get_voxels(&|vector| self.is_box(&vector), true)
     }
 
@@ -469,12 +471,14 @@ impl PeriodicLozengeTiling {
     // TODO consider Int32Array
     #[wasm_bindgen(js_name = getBoxVoxels)]
     pub fn get_box_voxels_js(&self) -> js_sys::Array {
+        // TODO log duration
         let voxels = self.get_box_voxels();
         self.vector3_vec_to_js_array(&voxels)
     }
 
     #[wasm_bindgen(js_name = getWallVoxels)]
     pub fn get_wall_voxels_js(&self) -> js_sys::Array {
+        // TODO log duration
         let voxels = self.get_wall_voxels();
         self.vector3_vec_to_js_array(&voxels)
     }
@@ -486,6 +490,7 @@ impl PeriodicLozengeTiling {
 
     #[wasm_bindgen(js_name = generateByAddingOnly)]
     pub fn generate_by_adding_only(&mut self, iterations: i32) {
+        // TODO log duration
         for _ in 0..iterations {
             self.add_random_box();
         }
@@ -493,6 +498,7 @@ impl PeriodicLozengeTiling {
 
     #[wasm_bindgen(js_name = generateWithMarkovChain)]
     pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
+        // TODO log duration
         for _ in 0..iterations {
             let rnd1 =
                 (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.addable_boxes_count() as f32 / q;

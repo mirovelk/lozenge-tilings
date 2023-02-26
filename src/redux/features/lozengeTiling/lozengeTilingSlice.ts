@@ -6,6 +6,7 @@ import {
   LozengeTilingPeriods,
   DrawDistance,
 } from '../../../core/lozengeTiling';
+import { withDurationLogging } from '../../../util/benchmark';
 
 import { RootState } from '../../store';
 
@@ -106,12 +107,16 @@ export const lozengeTilingSlice = createSlice({
       state.canGenerate = action.payload.valid;
     },
     generateByAddingOnly: (state) => {
-      lozengeTiling.generateByAddingOnly(state.iterations);
+      withDurationLogging('generateByAddingOnly', () => {
+        lozengeTiling.generateByAddingOnly(state.iterations);
+      });
       state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
       state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     generateWithMarkovChain: (state) => {
-      lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
+      withDurationLogging('generateByAddingOnly', () => {
+        lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
+      });
       state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
       state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
