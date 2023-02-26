@@ -3,6 +3,9 @@ mod vector2;
 mod vector3;
 mod vector3_set;
 
+#[macro_use]
+mod time;
+
 use crate::{vector2::Vector2, vector3_set::Vector3Set};
 use box_map::BoxMap;
 use vector3::Vector3;
@@ -449,7 +452,6 @@ impl PeriodicLozengeTiling {
     }
 
     fn get_wall_voxels(&self) -> Vec<Vector3> {
-        // TODO log duration
         self.get_voxels(&|vector| self.is_wall(&vector), false)
     }
 
@@ -471,16 +473,18 @@ impl PeriodicLozengeTiling {
     // TODO consider Int32Array
     #[wasm_bindgen(js_name = getBoxVoxels)]
     pub fn get_box_voxels_js(&self) -> js_sys::Array {
-        // TODO log duration
-        let voxels = self.get_box_voxels();
-        self.vector3_vec_to_js_array(&voxels)
+        time!("get_box_voxels_js", {
+            let voxels = self.get_box_voxels();
+            self.vector3_vec_to_js_array(&voxels)
+        })
     }
 
     #[wasm_bindgen(js_name = getWallVoxels)]
     pub fn get_wall_voxels_js(&self) -> js_sys::Array {
-        // TODO log duration
-        let voxels = self.get_wall_voxels();
-        self.vector3_vec_to_js_array(&voxels)
+        time!("get_wall_voxels_js", {
+            let voxels = self.get_wall_voxels();
+            self.vector3_vec_to_js_array(&voxels)
+        })
     }
 
     #[wasm_bindgen(js_name = getPeriodBoxCount)]
@@ -490,27 +494,30 @@ impl PeriodicLozengeTiling {
 
     #[wasm_bindgen(js_name = generateByAddingOnly)]
     pub fn generate_by_adding_only(&mut self, iterations: i32) {
-        // TODO log duration
-        for _ in 0..iterations {
-            self.add_random_box();
-        }
+        time!("generate_by_adding_only", {
+            for _ in 0..iterations {
+                self.add_random_box();
+            }
+        })
     }
 
     #[wasm_bindgen(js_name = generateWithMarkovChain)]
     pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
-        // TODO log duration
-        for _ in 0..iterations {
-            let rnd1 =
-                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.addable_boxes_count() as f32 / q;
-            let rnd2 =
-                (-1.0 * (1.0 - rand::random::<f32>()).ln()) / self.removable_boxes_count() as f32;
+        time!("generate_with_markov_chain", {
+            for _ in 0..iterations {
+                let rnd1 = (-1.0 * (1.0 - rand::random::<f32>()).ln())
+                    / self.addable_boxes_count() as f32
+                    / q;
+                let rnd2 = (-1.0 * (1.0 - rand::random::<f32>()).ln())
+                    / self.removable_boxes_count() as f32;
 
-            if rnd1 < rnd2 {
-                self.add_random_box();
-            } else {
-                self.remove_random_box();
+                if rnd1 < rnd2 {
+                    self.add_random_box();
+                } else {
+                    self.remove_random_box();
+                }
             }
-        }
+        })
     }
 }
 
