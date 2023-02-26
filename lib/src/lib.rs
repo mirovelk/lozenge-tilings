@@ -347,11 +347,11 @@ impl PeriodicLozengeTiling {
         }
     }
 
-    fn get_random_addable_box(&self) -> Option<Vector3> {
+    fn get_random_addable_box(&mut self) -> Option<Vector3> {
         self.addable_boxes.get_random()
     }
 
-    fn get_random_removable_box(&self) -> Option<Vector3> {
+    fn get_random_removable_box(&mut self) -> Option<Vector3> {
         self.removable_boxes.get_random()
     }
 

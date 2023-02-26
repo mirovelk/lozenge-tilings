@@ -1,4 +1,4 @@
-use rand::prelude::IteratorRandom;
+use rand::{prelude::IteratorRandom, rngs::ThreadRng};
 use std::collections::HashSet;
 
 use crate::vector3::Vector3;
@@ -9,6 +9,7 @@ type HasSetVector3 = HashSet<Vector3>;
 pub struct Vector3Set {
     initial_data: HasSetVector3,
     data: HasSetVector3,
+    rng: ThreadRng,
 }
 
 impl Vector3Set {
@@ -18,6 +19,7 @@ impl Vector3Set {
         Vector3Set {
             initial_data,
             data: HashSet::from_iter(data.clone()),
+            rng: rand::thread_rng(),
         }
     }
 
@@ -37,9 +39,8 @@ impl Vector3Set {
         self.data = self.initial_data.clone();
     }
 
-    pub fn get_random(&self) -> Option<Vector3> {
-        let mut rng = rand::thread_rng();
-        self.data.iter().choose(&mut rng).map(|v| *v)
+    pub fn get_random(&mut self) -> Option<Vector3> {
+        self.data.iter().choose(&mut self.rng).map(|v| *v)
     }
 }
 
@@ -103,7 +104,7 @@ mod tests {
 
     #[test]
     fn get_random_returns_none_when_empty() {
-        let set = Vector3Set::new(None);
+        let mut set = Vector3Set::new(None);
         assert_eq!(set.get_random(), None);
     }
 }
