@@ -112,7 +112,7 @@ impl PeriodicLozengeTiling {
             z_height,
         } = self.periods;
 
-        if self.periods.x_shift == 0 && self.periods.y_shift == 0 {
+        if x_shift == 0 && y_shift == 0 {
             return vector.clone();
         }
 
