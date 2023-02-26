@@ -126,7 +126,7 @@ export const lozengeTilingSlice = createSlice({
       state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     removeRandomBox: (state) => {
-      if (lozengeTiling.getPeriodBoxCount() > 1) {
+      if (lozengeTiling.getPeriodBoxCount() > 0) {
         lozengeTiling.removeRandomBox();
         state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
         state.boxes = freeze(lozengeTiling.getBoxVoxels());
@@ -163,7 +163,7 @@ export const selectCanGenerate = (state: RootState) => {
 
 export const selectCanRemoveBox = (state: RootState) => {
   const { boxCounts } = state.lozengeTiling;
-  return boxCounts.length > 0;
+  return boxCounts.length > 0 && boxCounts[boxCounts.length - 1] > 0;
 };
 
 export const selectVoxelPositions = (state: RootState) => {
