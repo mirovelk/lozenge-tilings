@@ -114,7 +114,7 @@ export const lozengeTilingSlice = createSlice({
       state.boxes = freeze(lozengeTiling.getBoxVoxels());
     },
     generateWithMarkovChain: (state) => {
-      withDurationLogging('generateByAddingOnly', () => {
+      withDurationLogging('generateWithMarkovChain', () => {
         lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
       });
       state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
