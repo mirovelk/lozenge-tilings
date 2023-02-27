@@ -371,8 +371,11 @@ impl PeriodicLozengeTiling {
         }
     }
 
-    // TODO get rid of dynamic dispatch
-    fn get_voxels(&self, match_fn: &dyn Fn(Vector3) -> bool, include_edges: bool) -> Vec<Vector3> {
+    fn get_voxels(
+        &self,
+        match_fn: fn(&PeriodicLozengeTiling, &Vector3) -> bool,
+        include_edges: bool,
+    ) -> Vec<Vector3> {
         let mut voxels = Vec::new();
         let VoxelBoundaries {
             x_min,
@@ -386,10 +389,10 @@ impl PeriodicLozengeTiling {
         for x in x_min..x_max {
             for y in y_min..y_max {
                 for z in z_min..z_max {
-                    if match_fn(Vector3(x, y, z)) {
-                        let box_to_left = match_fn(Vector3(x + 1, y, z));
-                        let box_to_right = match_fn(Vector3(x, y + 1, z));
-                        let box_above = match_fn(Vector3(x, y, z + 1));
+                    if match_fn(&self, &Vector3(x, y, z)) {
+                        let box_to_left = match_fn(&self, &Vector3(x + 1, y, z));
+                        let box_to_right = match_fn(&self, &Vector3(x, y + 1, z));
+                        let box_above = match_fn(&self, &Vector3(x, y, z + 1));
                         if include_edges
                             && (x == x_min
                                 || y == y_min
@@ -415,11 +418,11 @@ impl PeriodicLozengeTiling {
     }
 
     pub fn get_wall_voxels(&self) -> Vec<Vector3> {
-        self.get_voxels(&|vector| self.is_wall(&vector), false)
+        self.get_voxels(PeriodicLozengeTiling::is_wall, false)
     }
 
     pub fn get_box_voxels(&self) -> Vec<Vector3> {
-        self.get_voxels(&|vector| self.is_box(&vector), true)
+        self.get_voxels(PeriodicLozengeTiling::is_box, true)
     }
 
     pub fn get_period_box_count(&self) -> i32 {
