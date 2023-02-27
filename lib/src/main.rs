@@ -1,5 +1,3 @@
-// use lozenge_tilings::PeriodicLozengeTiling;
-
 use std::{env, time::Instant};
 extern crate lozenge_tilings;
 
