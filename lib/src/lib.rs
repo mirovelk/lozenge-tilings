@@ -47,9 +47,7 @@ pub struct PeriodicLozengeTiling {
     removable_boxes: Vector3Set,
 }
 
-#[wasm_bindgen]
 impl PeriodicLozengeTiling {
-    #[wasm_bindgen(constructor)]
     pub fn new(
         periods_x_shift: i32,
         periods_y_shift: i32,
@@ -77,19 +75,12 @@ impl PeriodicLozengeTiling {
         tiling
     }
 
-    #[wasm_bindgen]
-    pub fn debug(&self) {
-        console::log_1(&JsValue::from(format!("{:?}", &self)).into());
-    }
-
-    #[wasm_bindgen(js_name = reset)]
     pub fn reset(&mut self) {
         self.data.clear();
         self.addable_boxes.reset();
         self.removable_boxes.reset();
     }
 
-    #[wasm_bindgen(js_name = setPeriods)]
     pub fn set_periods(&mut self, x_shift: i32, y_shift: i32, z_height: i32) {
         self.periods.x_shift = x_shift;
         self.periods.y_shift = y_shift;
@@ -97,7 +88,6 @@ impl PeriodicLozengeTiling {
         self.reset();
     }
 
-    #[wasm_bindgen(js_name = setDrawDistance)]
     pub fn set_draw_distance(&mut self, x: i32, y: i32, z: i32) {
         self.draw_distance.x = x;
         self.draw_distance.y = y;
@@ -337,7 +327,6 @@ impl PeriodicLozengeTiling {
         self.removable_boxes.get_random()
     }
 
-    #[wasm_bindgen(js_name = addRandomBox)]
     pub fn add_random_box(&mut self) {
         if let Some(box_position) = self.get_random_addable_box() {
             self.add_box(box_position);
@@ -354,7 +343,6 @@ impl PeriodicLozengeTiling {
         self.removable_boxes.len()
     }
 
-    #[wasm_bindgen(js_name = removeRandomBox)]
     pub fn remove_random_box(&mut self) {
         if let Some(box_position) = self.get_random_removable_box() {
             self.remove_box(box_position);
@@ -383,6 +371,7 @@ impl PeriodicLozengeTiling {
         }
     }
 
+    // TODO get rid of dynamic dispatch
     fn get_voxels(&self, match_fn: &dyn Fn(Vector3) -> bool, include_edges: bool) -> Vec<Vector3> {
         let mut voxels = Vec::new();
         let VoxelBoundaries {
@@ -425,12 +414,92 @@ impl PeriodicLozengeTiling {
         voxels
     }
 
-    fn get_wall_voxels(&self) -> Vec<Vector3> {
+    pub fn get_wall_voxels(&self) -> Vec<Vector3> {
         self.get_voxels(&|vector| self.is_wall(&vector), false)
     }
 
-    fn get_box_voxels(&self) -> Vec<Vector3> {
+    pub fn get_box_voxels(&self) -> Vec<Vector3> {
         self.get_voxels(&|vector| self.is_box(&vector), true)
+    }
+
+    pub fn get_period_box_count(&self) -> i32 {
+        self.data.box_count()
+    }
+
+    pub fn generate_by_adding_only(&mut self, iterations: i32) {
+        for _ in 0..iterations {
+            self.add_random_box();
+        }
+    }
+
+    pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..iterations {
+            let rn1 = rng.gen::<f32>();
+            let rn2 = rng.gen::<f32>();
+
+            let num1 = (-1.0 * (1.0 - rn1).ln()) / self.addable_boxes_count() as f32 / q;
+            let num2 = (-1.0 * (1.0 - rn2).ln()) / self.removable_boxes_count() as f32;
+
+            if num1 < num2 {
+                self.add_random_box();
+            } else {
+                self.remove_random_box();
+            }
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl PeriodicLozengeTiling {
+    #[wasm_bindgen(constructor)]
+    pub fn new_js(
+        periods_x_shift: i32,
+        periods_y_shift: i32,
+        periods_z_height: i32,
+        draw_distance_x: i32,
+        draw_distance_y: i32,
+        draw_distance_z: i32,
+    ) -> PeriodicLozengeTiling {
+        PeriodicLozengeTiling::new(
+            periods_x_shift,
+            periods_y_shift,
+            periods_z_height,
+            draw_distance_x,
+            draw_distance_y,
+            draw_distance_z,
+        )
+    }
+
+    #[wasm_bindgen]
+    pub fn debug(&self) {
+        console::log_1(&JsValue::from(format!("{:?}", &self)).into());
+    }
+
+    #[wasm_bindgen(js_name = reset)]
+    pub fn reset_js(&mut self) {
+        self.reset();
+    }
+
+    #[wasm_bindgen(js_name = setPeriods)]
+    pub fn set_periods_js(&mut self, x_shift: i32, y_shift: i32, z_height: i32) {
+        self.set_periods(x_shift, y_shift, z_height);
+    }
+
+    #[wasm_bindgen(js_name = setDrawDistance)]
+    pub fn set_draw_distance_js(&mut self, x: i32, y: i32, z: i32) {
+        self.set_draw_distance(x, y, z);
+    }
+
+    #[wasm_bindgen(js_name = addRandomBox)]
+    pub fn add_random_box_js(&mut self) {
+        self.add_random_box();
+    }
+
+    #[wasm_bindgen(js_name = removeRandomBox)]
+    pub fn remove_random_box_js(&mut self) {
+        self.remove_random_box();
     }
 
     // TODO consider separate impl/trait for conversion to js
@@ -461,35 +530,15 @@ impl PeriodicLozengeTiling {
     }
 
     #[wasm_bindgen(js_name = getPeriodBoxCount)]
-    pub fn get_period_box_count(&self) -> i32 {
-        self.data.box_count()
+    pub fn get_period_box_count_js(&self) -> i32 {
+        self.get_period_box_count()
     }
 
     #[wasm_bindgen(js_name = generateByAddingOnly)]
-    pub fn generate_by_adding_only(&mut self, iterations: i32) {
-        time!("generate_by_adding_only", {
-            for _ in 0..iterations {
-                self.add_random_box();
-            }
+    pub fn generate_by_adding_only_js(&mut self, iterations: i32) {
+        time!("generate_by_adding_only_js", {
+            self.generate_by_adding_only(iterations);
         })
-    }
-
-    pub fn generate_with_markov_chain(&mut self, iterations: i32, q: f32) {
-        let mut rng = rand::thread_rng();
-
-        for _ in 0..iterations {
-            let rn1 = rng.gen::<f32>();
-            let rn2 = rng.gen::<f32>();
-
-            let num1 = (-1.0 * (1.0 - rn1).ln()) / self.addable_boxes_count() as f32 / q;
-            let num2 = (-1.0 * (1.0 - rn2).ln()) / self.removable_boxes_count() as f32;
-
-            if num1 < num2 {
-                self.add_random_box();
-            } else {
-                self.remove_random_box();
-            }
-        }
     }
 
     #[wasm_bindgen(js_name = generateWithMarkovChain)]
@@ -516,5 +565,11 @@ mod tests {
         debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(-1, 0, 0)), true);
         debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(0, -1, 0)), true);
         debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(0, 0, -1)), true);
+    }
+
+    #[test]
+    fn can_get_wall_voxels() {
+        let lozenge_tiling = PeriodicLozengeTiling::new(1, 2, 3, 10, 10, 10);
+        lozenge_tiling.get_wall_voxels();
     }
 }
