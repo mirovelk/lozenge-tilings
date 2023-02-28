@@ -1,9 +1,9 @@
 use rand::{prelude::IteratorRandom, rngs::ThreadRng};
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 
 use crate::vector3::Vector3;
 
-type HasSetVector3 = HashSet<Vector3>;
+type HasSetVector3 = FxHashSet<Vector3>;
 
 #[derive(Debug)]
 pub struct Vector3Set {
@@ -15,10 +15,10 @@ pub struct Vector3Set {
 impl Vector3Set {
     pub fn new(data: Option<Vec<Vector3>>) -> Vector3Set {
         let data = data.unwrap_or_default();
-        let initial_data = HashSet::from_iter(data.clone());
+        let initial_data = FxHashSet::from_iter(data.clone());
         Vector3Set {
             initial_data,
-            data: HashSet::from_iter(data.clone()),
+            data: FxHashSet::from_iter(data.clone()),
             rng: rand::thread_rng(),
         }
     }

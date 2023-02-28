@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use crate::vector2::Vector2;
 
@@ -7,7 +7,7 @@ use crate::vector2::Vector2;
 // Value 0 on position (0, 0) is a box.
 const FLOOR_HEIGHT: i32 = -1;
 
-type BoxHashMap = HashMap<Vector2, i32>;
+type BoxHashMap = FxHashMap<Vector2, i32>;
 
 #[derive(Debug)]
 pub struct BoxMap {
@@ -17,7 +17,7 @@ pub struct BoxMap {
 impl BoxMap {
     pub fn new() -> BoxMap {
         BoxMap {
-            data: HashMap::new(),
+            data: FxHashMap::default(),
         }
     }
 
