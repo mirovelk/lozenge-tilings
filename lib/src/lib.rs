@@ -202,14 +202,12 @@ impl PeriodicLozengeTiling {
     }
 
     fn is_box(&self, vector: &Vector3) -> bool {
-        !self.is_wall(vector) && {
-            let Vector3(nx, ny, nz) = self.normalize3(vector);
-            self.get_height(&Vector2(nx, ny)) >= nz
-        }
+        !self.is_wall(vector) && self.is_wall_or_box(vector)
     }
 
     fn is_wall_or_box(&self, vector: &Vector3) -> bool {
-        self.is_wall(vector) || self.is_box(vector)
+        let Vector3(nx, ny, nz) = self.normalize3(vector);
+        self.get_height(&Vector2(nx, ny)) >= nz
     }
 
     fn can_add_box(&self, vector: &Vector3) -> bool {
