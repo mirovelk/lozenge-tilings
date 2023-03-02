@@ -18,7 +18,7 @@ impl Vector3Set {
         let initial_data = FxHashSet::from_iter(data.clone());
         Vector3Set {
             initial_data,
-            data: FxHashSet::from_iter(data.clone()),
+            data: FxHashSet::from_iter(data),
             rng: rand::thread_rng(),
         }
     }
@@ -40,7 +40,7 @@ impl Vector3Set {
     }
 
     pub fn get_random(&mut self) -> Option<Vector3> {
-        self.data.iter().choose(&mut self.rng).map(|v| *v)
+        self.data.iter().choose(&mut self.rng).copied()
     }
 }
 

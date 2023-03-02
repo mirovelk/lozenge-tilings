@@ -56,7 +56,7 @@ impl PeriodicLozengeTiling {
         draw_distance_y: i32,
         draw_distance_z: i32,
     ) -> PeriodicLozengeTiling {
-        let tiling = PeriodicLozengeTiling {
+        PeriodicLozengeTiling {
             data: BoxMap::new(),
             draw_distance: DrawDistance {
                 x: draw_distance_x,
@@ -70,9 +70,7 @@ impl PeriodicLozengeTiling {
             },
             addable_boxes: Vector3Set::new(Some(vec![Vector3(0, 0, 0)])),
             removable_boxes: Vector3Set::new(None),
-        };
-
-        tiling
+        }
     }
 
     pub fn reset(&mut self) {
@@ -103,7 +101,7 @@ impl PeriodicLozengeTiling {
         } = self.periods;
 
         if x_shift == 0 && y_shift == 0 {
-            return vector.clone();
+            return *vector;
         }
 
         let Vector3(x, y, z) = vector;
@@ -387,10 +385,10 @@ impl PeriodicLozengeTiling {
         for x in x_min..x_max {
             for y in y_min..y_max {
                 for z in z_min..z_max {
-                    if match_fn(&self, &Vector3(x, y, z)) {
-                        let box_to_left = match_fn(&self, &Vector3(x + 1, y, z));
-                        let box_to_right = match_fn(&self, &Vector3(x, y + 1, z));
-                        let box_above = match_fn(&self, &Vector3(x, y, z + 1));
+                    if match_fn(self, &Vector3(x, y, z)) {
+                        let box_to_left = match_fn(self, &Vector3(x + 1, y, z));
+                        let box_to_right = match_fn(self, &Vector3(x, y + 1, z));
+                        let box_above = match_fn(self, &Vector3(x, y, z + 1));
                         if include_edges
                             && (x == x_min
                                 || y == y_min
@@ -475,7 +473,7 @@ impl PeriodicLozengeTiling {
 
     #[wasm_bindgen]
     pub fn debug(&self) {
-        console::log_1(&JsValue::from(format!("{:?}", &self)).into());
+        console::log_1(&JsValue::from(format!("{:?}", &self)));
     }
 
     #[wasm_bindgen(js_name = reset)]
@@ -557,15 +555,15 @@ mod tests {
     fn can_determine_initial_boxes_and_walls() {
         let lozenge_tiling = PeriodicLozengeTiling::new(3, 3, 3, 1, 1, 1);
         // no box initilally
-        debug_assert_eq!(lozenge_tiling.is_box(&Vector3(0, 0, 0)), false);
+        debug_assert!(!lozenge_tiling.is_box(&Vector3(0, 0, 0)));
         // no box on negative sides
-        debug_assert_eq!(lozenge_tiling.is_box(&Vector3(-1, 0, 0)), false);
-        debug_assert_eq!(lozenge_tiling.is_box(&Vector3(0, -1, 0)), false);
-        debug_assert_eq!(lozenge_tiling.is_box(&Vector3(0, 0, -1)), false);
+        debug_assert!(!lozenge_tiling.is_box(&Vector3(-1, 0, 0)));
+        debug_assert!(!lozenge_tiling.is_box(&Vector3(0, -1, 0)));
+        debug_assert!(!lozenge_tiling.is_box(&Vector3(0, 0, -1)));
         // all walls on negative sides`
-        debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(-1, 0, 0)), true);
-        debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(0, -1, 0)), true);
-        debug_assert_eq!(lozenge_tiling.is_wall(&Vector3(0, 0, -1)), true);
+        debug_assert!(lozenge_tiling.is_wall(&Vector3(-1, 0, 0)));
+        debug_assert!(lozenge_tiling.is_wall(&Vector3(0, -1, 0)));
+        debug_assert!(lozenge_tiling.is_wall(&Vector3(0, 0, -1)));
     }
 
     #[test]

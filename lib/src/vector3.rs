@@ -5,7 +5,7 @@ pub struct Vector3(pub i32, pub i32, pub i32);
 
 // imlement JsObject trait for Vector3 to return a js array
 impl Vector3 {
-    pub fn to_js_array(&self) -> js_sys::Array {
+    pub fn to_js_array(self) -> js_sys::Array {
         let js_array = js_sys::Array::new();
         js_array.push(&JsValue::from(self.0));
         js_array.push(&JsValue::from(self.1));
