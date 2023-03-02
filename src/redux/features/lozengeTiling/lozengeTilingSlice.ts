@@ -1,14 +1,21 @@
-import { createSlice, freeze, PayloadAction } from '@reduxjs/toolkit';
+import {
+  createAsyncThunk,
+  createSlice,
+  freeze,
+  PayloadAction,
+} from '@reduxjs/toolkit';
 import { Vector3Tuple } from 'three';
-import initWasm, * as wasm from '../../../../build/lib';
+import * as Comlink from 'comlink';
 
 import {
   LozengeTilingPeriods,
   DrawDistance,
 } from '../../../core/lozengeTiling';
 import { RootState } from '../../store';
+import { PeriodicLozengeTilingWorker } from '../../../core/lozengeTiling.worker';
 
 interface LozengeTilingState {
+  processing: boolean;
   periods: LozengeTilingPeriods;
   iterations: number;
   q: number;
@@ -19,7 +26,16 @@ interface LozengeTilingState {
   boxes: Vector3Tuple[];
 }
 
-await initWasm();
+const lozengeTilingWorker = new Worker(
+  new URL('../../../core/lozengeTiling.worker', import.meta.url),
+  {
+    name: 'lozengeTiling',
+    type: 'module',
+  }
+);
+
+const LozengeTiling =
+  Comlink.wrap<typeof PeriodicLozengeTilingWorker>(lozengeTilingWorker);
 
 const initialDrawDistance: DrawDistance = {
   x: 10,
@@ -33,65 +49,126 @@ const initialPeriods = {
   zHeight: 2,
 };
 
-const lozengeTiling = new wasm.PeriodicLozengeTiling(
-  initialPeriods.xShift,
-  initialPeriods.yShift,
-  initialPeriods.zHeight,
-  initialDrawDistance.x,
-  initialDrawDistance.y,
-  initialDrawDistance.z
+const lozengeTiling = await new LozengeTiling(
+  initialPeriods,
+  initialDrawDistance
 );
 
+await lozengeTiling.init();
+
+const initialWalls = await lozengeTiling.getWallVoxels();
+
 const initialState: LozengeTilingState = {
+  processing: false,
   periods: initialPeriods,
   iterations: 10,
   q: 0.9, // input <0, 1>
   drawDistance: initialDrawDistance,
   canGenerate: true,
   boxCounts: [],
-  walls: freeze(lozengeTiling.getWallVoxels()),
+  walls: freeze(initialWalls),
   boxes: [],
 };
+
+export const reset = createAsyncThunk('lozengeTiling/reset', async () => {
+  await lozengeTiling.reset();
+  return {
+    walls: await lozengeTiling.getWallVoxels(),
+    boxes: await lozengeTiling.getBoxVoxels(),
+  };
+});
+
+export const periodUpdated = createAsyncThunk(
+  'lozengeTiling/periodUpdated',
+  async (periods: Partial<LozengeTilingPeriods>, { getState }) => {
+    const previousPeriods = (getState() as RootState).lozengeTiling.periods;
+    const nextPeriods = { ...previousPeriods, ...periods };
+    await lozengeTiling.setPeriods(
+      nextPeriods.xShift,
+      nextPeriods.yShift,
+      nextPeriods.zHeight
+    );
+    return {
+      periods,
+      walls: await lozengeTiling.getWallVoxels(),
+    };
+  }
+);
+
+export const drawDistanceUpdated = createAsyncThunk(
+  'lozengeTiling/drawDistanceUpdated',
+  async (drawDistance: Partial<DrawDistance>, { getState }) => {
+    const state = getState() as RootState;
+    const previousDrawDistance = state.lozengeTiling.drawDistance;
+    const previousBoxes = state.lozengeTiling.boxes;
+
+    const newDrawDistance = { ...previousDrawDistance, ...drawDistance };
+    await lozengeTiling.setDrawDistance(
+      newDrawDistance.x,
+      newDrawDistance.y,
+      newDrawDistance.z
+    );
+    return {
+      drawDistance: newDrawDistance,
+      walls: await lozengeTiling.getWallVoxels(),
+      boxes: previousBoxes.length > 0 ? await lozengeTiling.getBoxVoxels() : [],
+    };
+  }
+);
+
+export const generateByAddingOnly = createAsyncThunk(
+  'lozengeTiling/generateByAddingOnly',
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+    const iterations = state.lozengeTiling.iterations;
+    await lozengeTiling.generateByAddingOnly(iterations);
+    return {
+      periodBoxCount: await lozengeTiling.getPeriodBoxCount(),
+      boxes: await lozengeTiling.getBoxVoxels(),
+    };
+  }
+);
+
+export const generateWithMarkovChain = createAsyncThunk(
+  'lozengeTiling/generateWithMarkovChain',
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+    const iterations = state.lozengeTiling.iterations;
+    const q = state.lozengeTiling.q;
+    await lozengeTiling.generateWithMarkovChain(iterations, q);
+    return {
+      periodBoxCount: await lozengeTiling.getPeriodBoxCount(),
+      boxes: await lozengeTiling.getBoxVoxels(),
+    };
+  }
+);
+
+export const addRandomBox = createAsyncThunk(
+  'lozengeTiling/addRandomBox',
+  async () => {
+    await lozengeTiling.addRandomBox();
+    return {
+      periodBoxCount: await lozengeTiling.getPeriodBoxCount(),
+      boxes: await lozengeTiling.getBoxVoxels(),
+    };
+  }
+);
+
+export const removeRandomBox = createAsyncThunk(
+  'lozengeTiling/removeRandomBox',
+  async () => {
+    await lozengeTiling.removeRandomBox();
+    return {
+      periodBoxCount: await lozengeTiling.getPeriodBoxCount(),
+      boxes: await lozengeTiling.getBoxVoxels(),
+    };
+  }
+);
 
 export const lozengeTilingSlice = createSlice({
   name: 'lozengeTiling',
   initialState,
   reducers: {
-    reset: (state) => {
-      lozengeTiling.reset();
-      state.walls = freeze(lozengeTiling.getWallVoxels());
-      state.boxes = freeze(lozengeTiling.getBoxVoxels());
-      state.boxCounts = [];
-    },
-    periodUpdated: (
-      state,
-      action: PayloadAction<Partial<LozengeTilingPeriods>>
-    ) => {
-      state.periods = { ...state.periods, ...action.payload };
-      lozengeTiling.setPeriods(
-        state.periods.xShift,
-        state.periods.yShift,
-        state.periods.zHeight
-      );
-      state.walls = freeze(lozengeTiling.getWallVoxels());
-      state.boxes = [];
-      state.boxCounts = [];
-    },
-    drawDistanceUpdated: (
-      state,
-      action: PayloadAction<Partial<DrawDistance>>
-    ) => {
-      const drawDistance = action.payload;
-      state.drawDistance = { ...state.drawDistance, ...drawDistance };
-      lozengeTiling.setDrawDistance(
-        state.drawDistance.x,
-        state.drawDistance.y,
-        state.drawDistance.z
-      );
-      state.walls = freeze(lozengeTiling.getWallVoxels());
-      state.boxes =
-        state.boxes.length > 0 ? freeze(lozengeTiling.getBoxVoxels()) : [];
-    },
     qUpdated: (state, action: PayloadAction<{ q: number }>) => {
       state.q = action.payload.q;
     },
@@ -104,32 +181,84 @@ export const lozengeTilingSlice = createSlice({
     configValidated: (state, action: PayloadAction<{ valid: boolean }>) => {
       state.canGenerate = action.payload.valid;
     },
-    generateByAddingOnly: (state) => {
-      lozengeTiling.generateByAddingOnly(state.iterations);
-      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-      state.boxes = freeze(lozengeTiling.getBoxVoxels());
-    },
-    generateWithMarkovChain: (state) => {
-      lozengeTiling.generateWithMarkovChain(state.iterations, state.q);
-      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-      state.boxes = freeze(lozengeTiling.getBoxVoxels());
-    },
-    addRandomBox: (state) => {
-      lozengeTiling.addRandomBox();
-      state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-      state.boxes = freeze(lozengeTiling.getBoxVoxels());
-    },
-    removeRandomBox: (state) => {
-      if (lozengeTiling.getPeriodBoxCount() > 0) {
-        lozengeTiling.removeRandomBox();
-        state.boxCounts.push(lozengeTiling.getPeriodBoxCount());
-        state.boxes = freeze(lozengeTiling.getBoxVoxels());
-      }
-    },
+  },
+  extraReducers: (builder) => {
+    // reset
+    builder.addCase(reset.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(reset.fulfilled, (state, action) => {
+      state.walls = freeze(action.payload.walls);
+      state.boxes = freeze(action.payload.boxes);
+      state.boxCounts = [];
+      state.processing = false;
+    });
+    // periodUpdated
+    builder.addCase(periodUpdated.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(periodUpdated.fulfilled, (state, action) => {
+      state.periods = { ...state.periods, ...action.payload.periods };
+      state.walls = freeze(action.payload.walls);
+      state.boxes = [];
+      state.boxCounts = [];
+      state.processing = false;
+    });
+    // drawDistanceUpdated
+    builder.addCase(drawDistanceUpdated.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(drawDistanceUpdated.fulfilled, (state, action) => {
+      state.drawDistance = action.payload.drawDistance;
+      state.walls = freeze(action.payload.walls);
+      state.boxes = freeze(action.payload.boxes);
+      state.processing = false;
+    });
+    // generateByAddingOnly
+    builder.addCase(generateByAddingOnly.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(generateByAddingOnly.fulfilled, (state, action) => {
+      state.boxCounts.push(action.payload.periodBoxCount);
+      state.boxes = freeze(action.payload.boxes);
+      state.processing = false;
+    });
+    // generateWithMarkovChain
+    builder.addCase(generateWithMarkovChain.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(generateWithMarkovChain.fulfilled, (state, action) => {
+      state.boxCounts.push(action.payload.periodBoxCount);
+      state.boxes = freeze(action.payload.boxes);
+      state.processing = false;
+    });
+    // addRandomBox
+    builder.addCase(addRandomBox.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(addRandomBox.fulfilled, (state, action) => {
+      state.boxCounts.push(action.payload.periodBoxCount);
+      state.boxes = freeze(action.payload.boxes);
+      state.processing = false;
+    });
+    // removeRandomBox
+    builder.addCase(removeRandomBox.pending, (state) => {
+      state.processing = true;
+    });
+    builder.addCase(removeRandomBox.fulfilled, (state, action) => {
+      state.boxCounts.push(action.payload.periodBoxCount);
+      state.boxes = freeze(action.payload.boxes);
+      state.processing = false;
+    });
   },
 });
 
 // Selectors
+export const selectProcessing = (state: RootState) => {
+  const { processing } = state.lozengeTiling;
+  return processing;
+};
+
 export const selectPeriods = (state: RootState) => {
   const { periods } = state.lozengeTiling;
   return periods;
@@ -181,17 +310,6 @@ export const selectBoxCountsAverage = (state: RootState) => {
 
 const { actions, reducer } = lozengeTilingSlice;
 
-export const {
-  reset,
-  generateByAddingOnly,
-  generateWithMarkovChain,
-  periodUpdated,
-  iterationsUpdated,
-  configValidated,
-  addRandomBox,
-  removeRandomBox,
-  qUpdated,
-  drawDistanceUpdated,
-} = actions;
+export const { iterationsUpdated, configValidated, qUpdated } = actions;
 
 export default reducer;

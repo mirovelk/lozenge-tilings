@@ -5,8 +5,9 @@ import {
   styled,
   Checkbox,
   FormControlLabel,
+  LinearProgress,
 } from '@mui/material';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 
@@ -27,6 +28,7 @@ import {
   selectDrawDistance,
   selectIterations,
   selectPeriods,
+  selectProcessing,
   selectQ,
 } from './redux/features/lozengeTiling/lozengeTilingSlice';
 import { useAppDispatch, useAppSelector } from './redux/store';
@@ -54,6 +56,25 @@ function isInputValueValidDrawDistance(value: string) {
 
 function App() {
   const dispatch = useAppDispatch();
+
+  const processing = useAppSelector(selectProcessing);
+  const [showProgress, setShowProgress] = useState(false);
+  const showProgressRef = useRef<ReturnType<typeof setTimeout> | null>();
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    if (processing) {
+      timeout = setTimeout(() => {
+        setShowProgress(true);
+      }, 300);
+      showProgressRef.current = timeout;
+    } else {
+      if (showProgressRef.current) {
+        clearTimeout(showProgressRef.current);
+      }
+      setShowProgress(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [processing]);
 
   const iterations = useAppSelector(selectIterations);
   const periods = useAppSelector(selectPeriods);
@@ -132,11 +153,11 @@ function App() {
   const onConfigSubmit = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (canGenerate) {
+      if (canGenerate && !processing) {
         generateTiling();
       }
     },
-    [canGenerate, generateTiling]
+    [canGenerate, generateTiling, processing]
   );
 
   const onAddBoxClick = useCallback(() => {
@@ -157,8 +178,16 @@ function App() {
     <StyleProvider>
       <div
         css={css`
+          height: 4px;
+        `}
+      >
+        {showProgress && <LinearProgress />}
+      </div>
+
+      <div
+        css={css`
           height: 100%;
-          padding: 20px 15px;
+          padding: 15px;
           display: flex;
           flex-direction: column;
         `}
@@ -189,6 +218,7 @@ function App() {
                   initialValue={iterations}
                   inputValueValid={isInputValueValidIterations}
                   onValidChange={onIterationsChange}
+                  readOnly={processing}
                 />
                 <div
                   css={css`
@@ -201,6 +231,7 @@ function App() {
                       <Checkbox
                         checked={markovChain}
                         onChange={() => setMarkovChain((prev) => !prev)}
+                        disabled={processing}
                       />
                     }
                     label="Markov Chain"
@@ -211,6 +242,7 @@ function App() {
                   initialValue={q}
                   inputValueValid={isInputValueValidQ}
                   disabled={!markovChain}
+                  readOnly={processing}
                   onValidChange={onQChange}
                   inputProps={{
                     step: '0.001',
@@ -227,6 +259,7 @@ function App() {
                 <Button
                   variant="outlined"
                   color="error"
+                  disabled={processing}
                   onClick={resetOnClick}
                   css={css`
                     margin-right: 10px;
@@ -236,7 +269,7 @@ function App() {
                 </Button>
                 <Button
                   variant="outlined"
-                  disabled={!canRemoveBox}
+                  disabled={!canRemoveBox || processing}
                   onClick={onRemoveBoxClick}
                   css={css`
                     margin-right: 10px;
@@ -249,6 +282,7 @@ function App() {
                   css={css`
                     margin-right: 10px;
                   `}
+                  disabled={processing}
                   onClick={onAddBoxClick}
                 >
                   <Add />
@@ -256,7 +290,7 @@ function App() {
                 <Button
                   variant="contained"
                   type="submit"
-                  disabled={!canGenerate}
+                  disabled={!canGenerate || processing}
                 >
                   Generate More
                 </Button>
@@ -286,6 +320,7 @@ function App() {
                   initialValue={periods.xShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodXChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '0',
@@ -296,6 +331,7 @@ function App() {
                   initialValue={periods.yShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodYChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '0',
@@ -306,6 +342,7 @@ function App() {
                   initialValue={periods.zHeight}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={onPeriodZChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '0',
@@ -325,6 +362,7 @@ function App() {
                   initialValue={drawDistance.x}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={onDrawDistanceXChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '1',
@@ -338,6 +376,7 @@ function App() {
                   initialValue={drawDistance.y}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={onDrawDistanceYChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '1',
@@ -351,6 +390,7 @@ function App() {
                   initialValue={drawDistance.z}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={onDrawDistanceZChange}
+                  readOnly={processing}
                   inputProps={{
                     step: '1',
                     min: '1',
