@@ -116,8 +116,9 @@ function App() {
     setIterations(interations);
   }, []);
 
-  const periodsChange = useCallback(
+  const onPeriodsChange = useCallback(
     async (periods: LozengeTilingPeriods) => {
+      setPeriods(periods);
       startProcessing();
       setBoxes([]);
       setBoxCounts([]);
@@ -128,39 +129,13 @@ function App() {
     [startProcessing, stopProcessing]
   );
 
-  const onPeriodXChange = useCallback(
-    async (xShift: number) => {
-      const newPeriods = { ...periods, xShift };
-      setPeriods(newPeriods);
-      await periodsChange(newPeriods);
-    },
-    [periodsChange, periods]
-  );
-
-  const onPeriodYChange = useCallback(
-    async (yShift: number) => {
-      const newPeriods = { ...periods, yShift };
-      setPeriods(newPeriods);
-      await periodsChange(newPeriods);
-    },
-    [periodsChange, periods]
-  );
-
-  const onPeriodZChange = useCallback(
-    async (zHeight: number) => {
-      const newPeriods = { ...periods, zHeight };
-      setPeriods(newPeriods);
-      await periodsChange(newPeriods);
-    },
-    [periodsChange, periods]
-  );
-
   const onQChange = useCallback((q: number) => {
     setQ(q);
   }, []);
 
-  const drawDistanceChange = useCallback(
+  const onDrawDistanceChange = useCallback(
     async (drawDistance: DrawDistance) => {
+      setDrawDistance(drawDistance);
       startProcessing();
       await lozengeTilingComlink.setDrawDistance(drawDistance);
       setWalls(await lozengeTilingComlink.getWallVoxels());
@@ -168,33 +143,6 @@ function App() {
       stopProcessing();
     },
     [startProcessing, stopProcessing]
-  );
-
-  const onDrawDistanceXChange = useCallback(
-    async (x: number) => {
-      const newDrawDistance = { ...drawDistance, x };
-      setDrawDistance(newDrawDistance);
-      await drawDistanceChange(newDrawDistance);
-    },
-    [drawDistance, drawDistanceChange]
-  );
-
-  const onDrawDistanceYChange = useCallback(
-    async (y: number) => {
-      const newDrawDistance = { ...drawDistance, y };
-      setDrawDistance(newDrawDistance);
-      await drawDistanceChange(newDrawDistance);
-    },
-    [drawDistance, drawDistanceChange]
-  );
-
-  const onDrawDistanceZChange = useCallback(
-    async (z: number) => {
-      const newDrawDistance = { ...drawDistance, z };
-      setDrawDistance(newDrawDistance);
-      await drawDistanceChange(newDrawDistance);
-    },
-    [drawDistance, drawDistanceChange]
   );
 
   const generateWithMarkovChain = useCallback(async () => {
@@ -409,7 +357,9 @@ function App() {
                   label="xShift:"
                   initialValue={periods.xShift}
                   inputValueValid={isInputValueValidPeriod}
-                  onValidChange={onPeriodXChange}
+                  onValidChange={(xShift) => {
+                    onPeriodsChange({ ...periods, xShift });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
@@ -421,7 +371,9 @@ function App() {
                   label="yShift:"
                   initialValue={periods.yShift}
                   inputValueValid={isInputValueValidPeriod}
-                  onValidChange={onPeriodYChange}
+                  onValidChange={(yShift) => {
+                    onPeriodsChange({ ...periods, yShift });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
@@ -433,7 +385,9 @@ function App() {
                   label="zHeight:"
                   initialValue={periods.zHeight}
                   inputValueValid={isInputValueValidPeriod}
-                  onValidChange={onPeriodZChange}
+                  onValidChange={(zHeight) => {
+                    onPeriodsChange({ ...periods, zHeight });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
@@ -454,7 +408,9 @@ function App() {
                   label="x:"
                   initialValue={drawDistance.x}
                   inputValueValid={isInputValueValidDrawDistance}
-                  onValidChange={onDrawDistanceXChange}
+                  onValidChange={(x) => {
+                    onDrawDistanceChange({ ...drawDistance, x });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
@@ -469,7 +425,9 @@ function App() {
                   label="y:"
                   initialValue={drawDistance.y}
                   inputValueValid={isInputValueValidDrawDistance}
-                  onValidChange={onDrawDistanceYChange}
+                  onValidChange={(y) => {
+                    onDrawDistanceChange({ ...drawDistance, y });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
@@ -484,7 +442,9 @@ function App() {
                   label="z:"
                   initialValue={drawDistance.z}
                   inputValueValid={isInputValueValidDrawDistance}
-                  onValidChange={onDrawDistanceZChange}
+                  onValidChange={(z) => {
+                    onDrawDistanceChange({ ...drawDistance, z });
+                  }}
                   readOnly={processing}
                   inputProps={{
                     step: '1',
