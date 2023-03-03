@@ -2,13 +2,22 @@ import { css } from '@emotion/react';
 import { Paper } from '@mui/material';
 import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
+import { Vector3Tuple } from 'three';
 
 import Boxes from './Boxes';
 import Counters from './Counters';
 
 const helpersSize = 10000;
 
-function MainScene() {
+function MainScene({
+  boxCounts,
+  walls,
+  boxes,
+}: {
+  boxCounts: number[];
+  walls: Vector3Tuple[];
+  boxes: Vector3Tuple[];
+}) {
   return (
     <div
       css={css`
@@ -36,7 +45,7 @@ function MainScene() {
           rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
         /> */}
         {/* <axesHelper args={[helpersSize]} /> */}
-        <Boxes />
+        <Boxes walls={walls} boxes={boxes} />
         <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
           <GizmoViewport
             axisColors={['#9d4b4b', '#3b5b9d', '#2f7f4f']}
@@ -57,7 +66,7 @@ function MainScene() {
             padding: 10px;
           `}
         >
-          <Counters />
+          <Counters boxCounts={boxCounts} />
         </Paper>
       </div>
     </div>

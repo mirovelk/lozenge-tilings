@@ -49,18 +49,18 @@ export class PeriodicLozengeTilingWorker {
     return this.lozengeTiling.getPeriodBoxCount();
   }
 
-  public async setPeriods(
-    xShift: number,
-    yShift: number,
-    zHeight: number
-  ): Promise<void> {
+  public async setPeriods({
+    xShift,
+    yShift,
+    zHeight,
+  }: LozengeTilingPeriods): Promise<void> {
     if (!this.lozengeTiling) {
       throw new Error('LozengeTiling not initialized');
     }
     this.lozengeTiling.setPeriods(xShift, yShift, zHeight);
   }
 
-  public async setDrawDistance(x: number, y: number, z: number): Promise<void> {
+  public async setDrawDistance({ x, y, z }: DrawDistance): Promise<void> {
     if (!this.lozengeTiling) {
       throw new Error('LozengeTiling not initialized');
     }

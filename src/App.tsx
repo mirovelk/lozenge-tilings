@@ -7,32 +7,16 @@ import {
   FormControlLabel,
   LinearProgress,
 } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
+import * as Comlink from 'comlink';
 
 import StyleProvider from './components/StyleProvider';
 
-import {
-  addRandomBox,
-  drawDistanceUpdated,
-  generateByAddingOnly,
-  generateWithMarkovChain,
-  iterationsUpdated,
-  periodUpdated,
-  qUpdated,
-  removeRandomBox,
-  reset,
-  selectCanGenerate,
-  selectCanRemoveBox,
-  selectDrawDistance,
-  selectIterations,
-  selectPeriods,
-  selectProcessing,
-  selectQ,
-} from './redux/features/lozengeTiling/lozengeTilingSlice';
-import { useAppDispatch, useAppSelector } from './redux/store';
 import { Add, Remove } from '@mui/icons-material';
+import { Vector3Tuple } from 'three';
+import { PeriodicLozengeTilingWorker } from './core/lozengeTiling.worker';
 
 const Panel = styled(Paper)`
   padding: 10px;
@@ -54,10 +38,55 @@ function isInputValueValidDrawDistance(value: string) {
   return value !== '' && Number(value) >= 1 && Number.isInteger(Number(value));
 }
 
-function App() {
-  const dispatch = useAppDispatch();
+const initialDrawDistance = {
+  x: 10,
+  y: 10,
+  z: 10,
+};
 
-  const processing = useAppSelector(selectProcessing);
+const initialPeriods = {
+  xShift: 1,
+  yShift: 2,
+  zHeight: 2,
+};
+
+const lozengeTilingWorker = new Worker(
+  new URL('./core/lozengeTiling.worker', import.meta.url),
+  {
+    name: 'lozengeTiling',
+    type: 'module',
+  }
+);
+
+const LozengeTiling =
+  Comlink.wrap<typeof PeriodicLozengeTilingWorker>(lozengeTilingWorker);
+
+const lozengeTilingComlink = await new LozengeTiling(
+  initialPeriods,
+  initialDrawDistance
+);
+
+await lozengeTilingComlink.init();
+
+const initialWalls = await lozengeTilingComlink.getWallVoxels();
+
+interface LozengeTilingPeriods {
+  xShift: number;
+  yShift: number;
+  zHeight: number;
+}
+
+interface DrawDistance {
+  x: number;
+  y: number;
+  z: number;
+}
+
+function App() {
+  const [configValid, setConfigValid] = useState(true);
+
+  const [processing, setProcessing] = useState(false);
+
   const [showProgress, setShowProgress] = useState(false);
   const showProgressRef = useRef<ReturnType<typeof setTimeout> | null>();
   useEffect(() => {
@@ -76,103 +105,172 @@ function App() {
     return () => clearTimeout(timeout);
   }, [processing]);
 
-  const iterations = useAppSelector(selectIterations);
-  const periods = useAppSelector(selectPeriods);
-  const q = useAppSelector(selectQ);
-  const drawDistance = useAppSelector(selectDrawDistance);
+  const [periods, setPeriods] = useState<LozengeTilingPeriods>({
+    xShift: 1,
+    yShift: 2,
+    zHeight: 2,
+  });
+  const [iterations, setIterations] = useState(10);
+  const [q, setQ] = useState(0.9);
+  const [drawDistance, setDrawDistance] = useState<DrawDistance>({
+    x: 10,
+    y: 10,
+    z: 10,
+  });
+  const [boxCounts, setBoxCounts] = useState<number[]>([]);
+  const canRemoveBox = useMemo(
+    () => boxCounts.length > 0 && boxCounts[boxCounts.length - 1] > 0,
+    [boxCounts]
+  );
+
+  const [walls, setWalls] = useState<Vector3Tuple[]>(initialWalls);
+  const [boxes, setBoxes] = useState<Vector3Tuple[]>([]);
 
   const [markovChain, setMarkovChain] = useState(true);
 
-  const canGenerate = useAppSelector(selectCanGenerate);
-  const canRemoveBox = useAppSelector(selectCanRemoveBox);
+  const onIterationsChange = useCallback((interations: number) => {
+    setIterations(interations);
+  }, []);
 
-  const onIterationsChange = useCallback(
-    (interations: number) => {
-      dispatch(iterationsUpdated({ interations }));
-    },
-    [dispatch]
-  );
+  const periodsChange = useCallback(async (periods: LozengeTilingPeriods) => {
+    setProcessing(true);
+    setBoxes([]);
+    setBoxCounts([]);
+    await lozengeTilingComlink.setPeriods(periods);
+    setWalls(await lozengeTilingComlink.getWallVoxels());
+    setProcessing(false);
+  }, []);
 
   const onPeriodXChange = useCallback(
-    (xShift: number) => {
-      dispatch(periodUpdated({ xShift }));
+    async (xShift: number) => {
+      const newPeriods = { ...periods, xShift };
+      setPeriods(newPeriods);
+      await periodsChange(newPeriods);
     },
-    [dispatch]
+    [periodsChange, periods]
   );
 
   const onPeriodYChange = useCallback(
-    (yShift: number) => {
-      dispatch(periodUpdated({ yShift }));
+    async (yShift: number) => {
+      const newPeriods = { ...periods, yShift };
+      setPeriods(newPeriods);
+      await periodsChange(newPeriods);
     },
-    [dispatch]
-  );
-
-  const onQChange = useCallback(
-    (q: number) => {
-      dispatch(qUpdated({ q }));
-    },
-    [dispatch]
+    [periodsChange, periods]
   );
 
   const onPeriodZChange = useCallback(
-    (zHeight: number) => {
-      dispatch(periodUpdated({ zHeight }));
+    async (zHeight: number) => {
+      const newPeriods = { ...periods, zHeight };
+      setPeriods(newPeriods);
+      await periodsChange(newPeriods);
     },
-    [dispatch]
+    [periodsChange, periods]
   );
 
+  const onQChange = useCallback((q: number) => {
+    setQ(q);
+  }, []);
+
+  const drawDistanceChange = useCallback(async (drawDistance: DrawDistance) => {
+    setProcessing(true);
+    await lozengeTilingComlink.setDrawDistance(drawDistance);
+    setWalls(await lozengeTilingComlink.getWallVoxels());
+    setBoxes(await lozengeTilingComlink.getBoxVoxels());
+    setProcessing(false);
+  }, []);
+
   const onDrawDistanceXChange = useCallback(
-    (x: number) => {
-      dispatch(drawDistanceUpdated({ x }));
+    async (x: number) => {
+      const newDrawDistance = { ...drawDistance, x };
+      setDrawDistance(newDrawDistance);
+      await drawDistanceChange(newDrawDistance);
     },
-    [dispatch]
+    [drawDistance, drawDistanceChange]
   );
 
   const onDrawDistanceYChange = useCallback(
-    (y: number) => {
-      dispatch(drawDistanceUpdated({ y }));
+    async (y: number) => {
+      const newDrawDistance = { ...drawDistance, y };
+      setDrawDistance(newDrawDistance);
+      await drawDistanceChange(newDrawDistance);
     },
-    [dispatch]
+    [drawDistance, drawDistanceChange]
   );
 
   const onDrawDistanceZChange = useCallback(
-    (z: number) => {
-      dispatch(drawDistanceUpdated({ z }));
+    async (z: number) => {
+      const newDrawDistance = { ...drawDistance, z };
+      setDrawDistance(newDrawDistance);
+      await drawDistanceChange(newDrawDistance);
     },
-    [dispatch]
+    [drawDistance, drawDistanceChange]
   );
 
-  const generateTiling = useCallback(() => {
+  const generateWithMarkovChain = useCallback(async () => {
+    setProcessing(true);
+    await lozengeTilingComlink.generateWithMarkovChain(iterations, q);
+    setBoxes(await lozengeTilingComlink.getBoxVoxels());
+    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
+    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
+    setProcessing(false);
+  }, [iterations, q]);
+
+  const generateByAddingOnly = useCallback(async () => {
+    setProcessing(true);
+    await lozengeTilingComlink.generateByAddingOnly(iterations);
+    setBoxes(await lozengeTilingComlink.getBoxVoxels());
+    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
+    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
+    setProcessing(false);
+  }, [iterations]);
+
+  const generateTiling = useCallback(async () => {
     if (markovChain) {
-      dispatch(generateWithMarkovChain());
+      await generateWithMarkovChain();
     } else {
-      dispatch(generateByAddingOnly());
+      await generateByAddingOnly();
     }
-  }, [dispatch, markovChain]);
+  }, [markovChain, generateByAddingOnly, generateWithMarkovChain]);
 
   const onConfigSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
+    async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (canGenerate && !processing) {
-        generateTiling();
+      if (configValid && !processing) {
+        await generateTiling();
       }
     },
-    [canGenerate, generateTiling, processing]
+    [configValid, generateTiling, processing]
   );
 
-  const onAddBoxClick = useCallback(() => {
-    dispatch(addRandomBox());
-  }, [dispatch]);
+  const onAddBoxClick = useCallback(async () => {
+    setProcessing(true);
+    await lozengeTilingComlink.addRandomBox();
+    setBoxes(await lozengeTilingComlink.getBoxVoxels());
+    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
+    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
+    setProcessing(false);
+  }, []);
 
-  const onRemoveBoxClick = useCallback(() => {
+  const onRemoveBoxClick = useCallback(async () => {
     if (canRemoveBox) {
-      dispatch(removeRandomBox());
+      setProcessing(true);
+      await lozengeTilingComlink.removeRandomBox();
+      setBoxes(await lozengeTilingComlink.getBoxVoxels());
+      const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
+      setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
+      setProcessing(false);
     }
-  }, [canRemoveBox, dispatch]);
+  }, [canRemoveBox]);
 
-  const resetOnClick = useCallback(() => {
-    dispatch(reset());
-  }, [dispatch]);
+  const resetOnClick = useCallback(async () => {
+    setProcessing(true);
+    await lozengeTilingComlink.reset();
+    setBoxes([]);
+    setBoxCounts([]);
+    setWalls(await lozengeTilingComlink.getWallVoxels());
+    setProcessing(false);
+  }, []);
 
   return (
     <StyleProvider>
@@ -219,6 +317,7 @@ function App() {
                   inputValueValid={isInputValueValidIterations}
                   onValidChange={onIterationsChange}
                   readOnly={processing}
+                  onValidationChange={setConfigValid}
                 />
                 <div
                   css={css`
@@ -244,6 +343,7 @@ function App() {
                   disabled={!markovChain}
                   readOnly={processing}
                   onValidChange={onQChange}
+                  onValidationChange={setConfigValid}
                   inputProps={{
                     step: '0.001',
                     min: '0',
@@ -290,7 +390,7 @@ function App() {
                 <Button
                   variant="contained"
                   type="submit"
-                  disabled={!canGenerate || processing}
+                  disabled={!configValid || processing}
                 >
                   Generate More
                 </Button>
@@ -325,6 +425,7 @@ function App() {
                     step: '1',
                     min: '0',
                   }}
+                  onValidationChange={setConfigValid}
                 />
                 <ConfigNumberInputWithLabel
                   label="yShift:"
@@ -336,6 +437,7 @@ function App() {
                     step: '1',
                     min: '0',
                   }}
+                  onValidationChange={setConfigValid}
                 />
                 <ConfigNumberInputWithLabel
                   label="zHeight:"
@@ -347,6 +449,7 @@ function App() {
                     step: '1',
                     min: '0',
                   }}
+                  onValidationChange={setConfigValid}
                 />
                 <div
                   css={css`
@@ -367,6 +470,7 @@ function App() {
                     step: '1',
                     min: '1',
                   }}
+                  onValidationChange={setConfigValid}
                   css={css`
                     margin-right: 10px;
                   `}
@@ -381,6 +485,7 @@ function App() {
                     step: '1',
                     min: '1',
                   }}
+                  onValidationChange={setConfigValid}
                   css={css`
                     margin-right: 10px;
                   `}
@@ -395,6 +500,7 @@ function App() {
                     step: '1',
                     min: '1',
                   }}
+                  onValidationChange={setConfigValid}
                   css={css`
                     margin-right: 10px;
                   `}
@@ -408,7 +514,7 @@ function App() {
             flex: 1 1 100%;
           `}
         >
-          <MainScene />
+          <MainScene walls={walls} boxes={boxes} boxCounts={boxCounts} />
         </Panel>
       </div>
     </StyleProvider>

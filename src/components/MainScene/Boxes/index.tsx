@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Vector3Tuple } from 'three';
-import { selectVoxelPositions } from '../../../redux/features/lozengeTiling/lozengeTilingSlice';
-import { useAppSelector } from '../../../redux/store';
 import edgeRed from './edgeRed.png';
 import edgeBlue from './edgeBlue.png';
 
@@ -58,9 +56,13 @@ function VoxelInstances({
   );
 }
 
-function Boxes() {
-  const { walls, boxes } = useAppSelector(selectVoxelPositions);
-
+function Boxes({
+  boxes,
+  walls,
+}: {
+  boxes: Vector3Tuple[];
+  walls: Vector3Tuple[];
+}) {
   return (
     <>
       {walls.length > 0 && (

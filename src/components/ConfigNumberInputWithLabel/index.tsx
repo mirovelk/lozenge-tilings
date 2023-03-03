@@ -1,13 +1,12 @@
 import { css, Input, InputProps, Typography } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
-import { configValidated } from '../../redux/features/lozengeTiling/lozengeTilingSlice';
-import { useAppDispatch } from '../../redux/store';
 
 interface Props {
   label: string;
   initialValue: number;
   disabled?: boolean;
   inputValueValid: (value: string) => boolean;
+  onValidationChange: (valid: boolean) => void;
   onValidChange: (value: number) => void;
 }
 
@@ -15,23 +14,23 @@ function ConfigNumberInputWithLabel({
   label,
   initialValue,
   inputValueValid,
+  onValidationChange,
   onValidChange,
   ...props
 }: Props & InputProps) {
-  const dispatch = useAppDispatch();
   const [inputValue, setInputValue] = useState<string>(initialValue.toString());
 
   const onInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(e.target.value);
       if (inputValueValid(e.target.value)) {
-        dispatch(configValidated({ valid: true }));
+        onValidationChange(true);
         onValidChange(Number(e.target.value));
       } else {
-        dispatch(configValidated({ valid: false }));
+        onValidationChange(false);
       }
     },
-    [inputValueValid, dispatch, onValidChange]
+    [inputValueValid, onValidationChange, onValidChange]
   );
 
   // update input value when initial value changes
