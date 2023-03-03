@@ -7,7 +7,7 @@ import {
   FormControlLabel,
   LinearProgress,
 } from '@mui/material';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
 import * as Comlink from 'comlink';
@@ -17,6 +17,7 @@ import StyleProvider from './components/StyleProvider';
 import { Add, Remove } from '@mui/icons-material';
 import { Vector3Tuple } from 'three';
 import { PeriodicLozengeTilingWorker } from './core/lozengeTiling.worker';
+import { useProcessingProgress } from './hooks/useProcessingProgress';
 
 const Panel = styled(Paper)`
   padding: 10px;
@@ -85,25 +86,8 @@ interface DrawDistance {
 function App() {
   const [configValid, setConfigValid] = useState(true);
 
-  const [processing, setProcessing] = useState(false);
-
-  const [showProgress, setShowProgress] = useState(false);
-  const showProgressRef = useRef<ReturnType<typeof setTimeout> | null>();
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    if (processing) {
-      timeout = setTimeout(() => {
-        setShowProgress(true);
-      }, 300);
-      showProgressRef.current = timeout;
-    } else {
-      if (showProgressRef.current) {
-        clearTimeout(showProgressRef.current);
-      }
-      setShowProgress(false);
-    }
-    return () => clearTimeout(timeout);
-  }, [processing]);
+  const { processing, showProgress, startProcessing, stopProcessing } =
+    useProcessingProgress();
 
   const [periods, setPeriods] = useState<LozengeTilingPeriods>({
     xShift: 1,
@@ -132,14 +116,17 @@ function App() {
     setIterations(interations);
   }, []);
 
-  const periodsChange = useCallback(async (periods: LozengeTilingPeriods) => {
-    setProcessing(true);
-    setBoxes([]);
-    setBoxCounts([]);
-    await lozengeTilingComlink.setPeriods(periods);
-    setWalls(await lozengeTilingComlink.getWallVoxels());
-    setProcessing(false);
-  }, []);
+  const periodsChange = useCallback(
+    async (periods: LozengeTilingPeriods) => {
+      startProcessing();
+      setBoxes([]);
+      setBoxCounts([]);
+      await lozengeTilingComlink.setPeriods(periods);
+      setWalls(await lozengeTilingComlink.getWallVoxels());
+      stopProcessing();
+    },
+    [startProcessing, stopProcessing]
+  );
 
   const onPeriodXChange = useCallback(
     async (xShift: number) => {
@@ -172,13 +159,16 @@ function App() {
     setQ(q);
   }, []);
 
-  const drawDistanceChange = useCallback(async (drawDistance: DrawDistance) => {
-    setProcessing(true);
-    await lozengeTilingComlink.setDrawDistance(drawDistance);
-    setWalls(await lozengeTilingComlink.getWallVoxels());
-    setBoxes(await lozengeTilingComlink.getBoxVoxels());
-    setProcessing(false);
-  }, []);
+  const drawDistanceChange = useCallback(
+    async (drawDistance: DrawDistance) => {
+      startProcessing();
+      await lozengeTilingComlink.setDrawDistance(drawDistance);
+      setWalls(await lozengeTilingComlink.getWallVoxels());
+      setBoxes(await lozengeTilingComlink.getBoxVoxels());
+      stopProcessing();
+    },
+    [startProcessing, stopProcessing]
+  );
 
   const onDrawDistanceXChange = useCallback(
     async (x: number) => {
@@ -208,22 +198,22 @@ function App() {
   );
 
   const generateWithMarkovChain = useCallback(async () => {
-    setProcessing(true);
+    startProcessing();
     await lozengeTilingComlink.generateWithMarkovChain(iterations, q);
     setBoxes(await lozengeTilingComlink.getBoxVoxels());
     const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
     setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    setProcessing(false);
-  }, [iterations, q]);
+    stopProcessing();
+  }, [iterations, q, startProcessing, stopProcessing]);
 
   const generateByAddingOnly = useCallback(async () => {
-    setProcessing(true);
+    startProcessing();
     await lozengeTilingComlink.generateByAddingOnly(iterations);
     setBoxes(await lozengeTilingComlink.getBoxVoxels());
     const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
     setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    setProcessing(false);
-  }, [iterations]);
+    stopProcessing();
+  }, [iterations, startProcessing, stopProcessing]);
 
   const generateTiling = useCallback(async () => {
     if (markovChain) {
@@ -244,33 +234,33 @@ function App() {
   );
 
   const onAddBoxClick = useCallback(async () => {
-    setProcessing(true);
+    startProcessing();
     await lozengeTilingComlink.addRandomBox();
     setBoxes(await lozengeTilingComlink.getBoxVoxels());
     const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
     setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    setProcessing(false);
-  }, []);
+    stopProcessing();
+  }, [startProcessing, stopProcessing]);
 
   const onRemoveBoxClick = useCallback(async () => {
     if (canRemoveBox) {
-      setProcessing(true);
+      startProcessing();
       await lozengeTilingComlink.removeRandomBox();
       setBoxes(await lozengeTilingComlink.getBoxVoxels());
       const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
       setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-      setProcessing(false);
+      stopProcessing();
     }
-  }, [canRemoveBox]);
+  }, [canRemoveBox, startProcessing, stopProcessing]);
 
   const resetOnClick = useCallback(async () => {
-    setProcessing(true);
+    startProcessing();
     await lozengeTilingComlink.reset();
     setBoxes([]);
     setBoxCounts([]);
     setWalls(await lozengeTilingComlink.getWallVoxels());
-    setProcessing(false);
-  }, []);
+    stopProcessing();
+  }, [startProcessing, stopProcessing]);
 
   return (
     <StyleProvider>
