@@ -188,7 +188,7 @@ impl PeriodicLozengeTiling {
 
         let Vector3(nx, ny, nz) = self.normalize3(vector);
 
-        if nz < 0 {
+        if nz < 0 || z_height == 0 {
             return true;
         }
 
@@ -200,12 +200,13 @@ impl PeriodicLozengeTiling {
     }
 
     fn is_box(&self, vector: &Vector3) -> bool {
-        !self.is_wall(vector) && self.is_wall_or_box(vector)
+        let Vector3(nx, ny, nz) = self.normalize3(vector);
+        !self.is_wall(vector) && self.get_height(&Vector2(nx, ny)) >= nz
     }
 
+    // TODO could be optimized but division by 0 causes issues
     fn is_wall_or_box(&self, vector: &Vector3) -> bool {
-        let Vector3(nx, ny, nz) = self.normalize3(vector);
-        self.get_height(&Vector2(nx, ny)) >= nz
+        self.is_wall(vector) || self.is_box(vector)
     }
 
     fn can_add_box(&self, vector: &Vector3) -> bool {
@@ -570,5 +571,13 @@ mod tests {
     fn can_get_wall_voxels() {
         let lozenge_tiling = PeriodicLozengeTiling::new(1, 2, 3, 10, 10, 10);
         lozenge_tiling.get_wall_voxels();
+    }
+
+    #[test]
+    fn can_generate_with_0_periods() {
+        let mut lozenge_tiling = PeriodicLozengeTiling::new(0, 0, 0, 10, 10, 10);
+        lozenge_tiling.get_wall_voxels();
+        lozenge_tiling.generate_with_markov_chain(5, 0.9);
+        debug_assert!(!lozenge_tiling.get_box_voxels().is_empty());
     }
 }
