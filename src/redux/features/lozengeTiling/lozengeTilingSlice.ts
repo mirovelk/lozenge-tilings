@@ -193,6 +193,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxCounts = [];
       state.processing = false;
     });
+    builder.addCase(reset.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
+    });
     // periodUpdated
     builder.addCase(periodUpdated.pending, (state) => {
       state.processing = true;
@@ -204,6 +208,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxCounts = [];
       state.processing = false;
     });
+    builder.addCase(periodUpdated.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
+    });
     // drawDistanceUpdated
     builder.addCase(drawDistanceUpdated.pending, (state) => {
       state.processing = true;
@@ -214,6 +222,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxes = freeze(action.payload.boxes);
       state.processing = false;
     });
+    builder.addCase(drawDistanceUpdated.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
+    });
     // generateByAddingOnly
     builder.addCase(generateByAddingOnly.pending, (state) => {
       state.processing = true;
@@ -222,6 +234,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxCounts.push(action.payload.periodBoxCount);
       state.boxes = freeze(action.payload.boxes);
       state.processing = false;
+    });
+    builder.addCase(generateByAddingOnly.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
     });
     // generateWithMarkovChain
     builder.addCase(generateWithMarkovChain.pending, (state) => {
@@ -232,6 +248,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxes = freeze(action.payload.boxes);
       state.processing = false;
     });
+    builder.addCase(generateWithMarkovChain.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
+    });
     // addRandomBox
     builder.addCase(addRandomBox.pending, (state) => {
       state.processing = true;
@@ -241,6 +261,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxes = freeze(action.payload.boxes);
       state.processing = false;
     });
+    builder.addCase(addRandomBox.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
+    });
     // removeRandomBox
     builder.addCase(removeRandomBox.pending, (state) => {
       state.processing = true;
@@ -249,6 +273,10 @@ export const lozengeTilingSlice = createSlice({
       state.boxCounts.push(action.payload.periodBoxCount);
       state.boxes = freeze(action.payload.boxes);
       state.processing = false;
+    });
+    builder.addCase(removeRandomBox.rejected, (state, action) => {
+      state.processing = false;
+      console.error(action);
     });
   },
 });
