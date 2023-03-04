@@ -1,16 +1,22 @@
 {
   "presets": [
-      [
-        "@babel/preset-env", 
-        {
-            "modules": false
-        }
+    [
+      "@babel/preset-env",
+      {
+        "modules": false
+      }
     ],
     [
       "@babel/preset-react",
-      { "runtime": "automatic", "importSource": "@emotion/react" }
+      {
+        "runtime": "automatic",
+        "importSource": "@emotion/react"
+      }
     ],
     "@babel/preset-typescript"
   ],
-  "plugins": ["@emotion"]
+  "plugins": [
+    "@emotion",
+    "jotai/babel/plugin-react-refresh"
+  ]
 }

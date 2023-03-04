@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { Vector3Tuple } from 'three';
 import edgeRed from './edgeRed.png';
 import edgeBlue from './edgeBlue.png';
+import { useAtom } from 'jotai';
+import { boxesAtom, wallsAtom } from '../../../appState';
 
 const boxTextureRed = new THREE.TextureLoader().load(edgeRed);
 const boxTextureBlue = new THREE.TextureLoader().load(edgeBlue);
@@ -56,13 +58,10 @@ function VoxelInstances({
   );
 }
 
-function Boxes({
-  boxes,
-  walls,
-}: {
-  boxes: Vector3Tuple[];
-  walls: Vector3Tuple[];
-}) {
+function Boxes() {
+  const [walls] = useAtom(wallsAtom);
+  const [boxes] = useAtom(boxesAtom);
+
   return (
     <>
       {walls.length > 0 && (

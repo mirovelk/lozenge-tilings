@@ -7,17 +7,28 @@ import {
   FormControlLabel,
   LinearProgress,
 } from '@mui/material';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
-import * as Comlink from 'comlink';
+import { useAtom } from 'jotai';
 
 import StyleProvider from './components/StyleProvider';
 
 import { Add, Remove } from '@mui/icons-material';
-import { Vector3Tuple } from 'three';
-import { PeriodicLozengeTilingWorker } from './core/lozengeTiling.worker';
-import { useProcessingProgress } from './hooks/useProcessingProgress';
+import {
+  addBoxAtom,
+  canRemoveBoxAtom,
+  drawDistanceAtom,
+  generateTilingAtom,
+  iterationsAtom,
+  markovChainAtom,
+  periodsAtom,
+  processingAtom,
+  qAtom,
+  removeBoxAtom,
+  resetAtom,
+  showProgressAtom,
+} from './appState';
 
 const Panel = styled(Paper)`
   padding: 10px;
@@ -39,130 +50,26 @@ function isInputValueValidDrawDistance(value: string) {
   return value !== '' && Number(value) >= 1 && Number.isInteger(Number(value));
 }
 
-const initialDrawDistance = {
-  x: 10,
-  y: 10,
-  z: 10,
-};
-
-const initialPeriods = {
-  xShift: 1,
-  yShift: 2,
-  zHeight: 2,
-};
-
-const lozengeTilingWorker = new Worker(
-  new URL('./core/lozengeTiling.worker', import.meta.url),
-  {
-    name: 'lozengeTiling',
-    type: 'module',
-  }
-);
-
-const LozengeTiling =
-  Comlink.wrap<typeof PeriodicLozengeTilingWorker>(lozengeTilingWorker);
-
-const lozengeTilingComlink = await new LozengeTiling(
-  initialPeriods,
-  initialDrawDistance
-);
-
-await lozengeTilingComlink.init();
-
-const initialWalls = await lozengeTilingComlink.getWallVoxels();
-
-interface LozengeTilingPeriods {
-  xShift: number;
-  yShift: number;
-  zHeight: number;
-}
-
-interface DrawDistance {
-  x: number;
-  y: number;
-  z: number;
-}
-
 function App() {
   const [configValid, setConfigValid] = useState(true);
 
-  const { processing, showProgress, startProcessing, stopProcessing } =
-    useProcessingProgress();
+  const [processing] = useAtom(processingAtom);
+  const [showProgress] = useAtom(showProgressAtom);
 
-  const [periods, setPeriods] = useState<LozengeTilingPeriods>(initialPeriods);
-  const [iterations, setIterations] = useState(10);
-  const [q, setQ] = useState(0.9);
-  const [drawDistance, setDrawDistance] =
-    useState<DrawDistance>(initialDrawDistance);
-  const [boxCounts, setBoxCounts] = useState<number[]>([]);
-  const canRemoveBox = useMemo(
-    () => boxCounts.length > 0 && boxCounts[boxCounts.length - 1] > 0,
-    [boxCounts]
-  );
+  const [iterations, setIterations] = useAtom(iterationsAtom);
+  const [q, setQ] = useAtom(qAtom);
 
-  const [walls, setWalls] = useState<Vector3Tuple[]>(initialWalls);
-  const [boxes, setBoxes] = useState<Vector3Tuple[]>([]);
+  const [periods, setPeriods] = useAtom(periodsAtom);
+  const [drawDistance, setDrawDistance] = useAtom(drawDistanceAtom);
 
-  const [markovChain, setMarkovChain] = useState(true);
+  const [canRemoveBox] = useAtom(canRemoveBoxAtom);
 
-  const onIterationsChange = useCallback((interations: number) => {
-    setIterations(interations);
-  }, []);
+  const [markovChain, setMarkovChain] = useAtom(markovChainAtom);
 
-  const onPeriodsChange = useCallback(
-    async (periods: LozengeTilingPeriods) => {
-      setPeriods(periods);
-      startProcessing();
-      setBoxes([]);
-      setBoxCounts([]);
-      await lozengeTilingComlink.setPeriods(periods);
-      setWalls(await lozengeTilingComlink.getWallVoxels());
-      stopProcessing();
-    },
-    [startProcessing, stopProcessing]
-  );
-
-  const onQChange = useCallback((q: number) => {
-    setQ(q);
-  }, []);
-
-  const onDrawDistanceChange = useCallback(
-    async (drawDistance: DrawDistance) => {
-      setDrawDistance(drawDistance);
-      startProcessing();
-      await lozengeTilingComlink.setDrawDistance(drawDistance);
-      setWalls(await lozengeTilingComlink.getWallVoxels());
-      setBoxes(await lozengeTilingComlink.getBoxVoxels());
-      stopProcessing();
-    },
-    [startProcessing, stopProcessing]
-  );
-
-  const generateWithMarkovChain = useCallback(async () => {
-    startProcessing();
-    await lozengeTilingComlink.generateWithMarkovChain(iterations, q);
-    setBoxes(await lozengeTilingComlink.getBoxVoxels());
-    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
-    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    stopProcessing();
-  }, [iterations, q, startProcessing, stopProcessing]);
-
-  const generateByAddingOnly = useCallback(async () => {
-    startProcessing();
-    await lozengeTilingComlink.generateByAddingOnly(iterations);
-    setBoxes(await lozengeTilingComlink.getBoxVoxels());
-    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
-    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    stopProcessing();
-  }, [iterations, startProcessing, stopProcessing]);
-
-  const generateTiling = useCallback(async () => {
-    if (markovChain) {
-      await generateWithMarkovChain();
-    } else {
-      await generateByAddingOnly();
-    }
-  }, [markovChain, generateByAddingOnly, generateWithMarkovChain]);
+  const [, generateTiling] = useAtom(generateTilingAtom);
+  const [, removeBox] = useAtom(removeBoxAtom);
+  const [, addBox] = useAtom(addBoxAtom);
+  const [, reset] = useAtom(resetAtom);
 
   const onConfigSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
@@ -173,35 +80,6 @@ function App() {
     },
     [configValid, generateTiling, processing]
   );
-
-  const onAddBoxClick = useCallback(async () => {
-    startProcessing();
-    await lozengeTilingComlink.addRandomBox();
-    setBoxes(await lozengeTilingComlink.getBoxVoxels());
-    const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
-    setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-    stopProcessing();
-  }, [startProcessing, stopProcessing]);
-
-  const onRemoveBoxClick = useCallback(async () => {
-    if (canRemoveBox) {
-      startProcessing();
-      await lozengeTilingComlink.removeRandomBox();
-      setBoxes(await lozengeTilingComlink.getBoxVoxels());
-      const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
-      setBoxCounts((prevBoxCounts) => [...prevBoxCounts, boxCounts]);
-      stopProcessing();
-    }
-  }, [canRemoveBox, startProcessing, stopProcessing]);
-
-  const resetOnClick = useCallback(async () => {
-    startProcessing();
-    await lozengeTilingComlink.reset();
-    setBoxes([]);
-    setBoxCounts([]);
-    setWalls(await lozengeTilingComlink.getWallVoxels());
-    stopProcessing();
-  }, [startProcessing, stopProcessing]);
 
   return (
     <StyleProvider>
@@ -246,7 +124,7 @@ function App() {
                   label="Iterations:"
                   initialValue={iterations}
                   inputValueValid={isInputValueValidIterations}
-                  onValidChange={onIterationsChange}
+                  onValidChange={(iterations) => setIterations(iterations)}
                   readOnly={processing}
                   onValidationChange={setConfigValid}
                 />
@@ -273,7 +151,7 @@ function App() {
                   inputValueValid={isInputValueValidQ}
                   disabled={!markovChain}
                   readOnly={processing}
-                  onValidChange={onQChange}
+                  onValidChange={(q) => setQ(q)}
                   onValidationChange={setConfigValid}
                   inputProps={{
                     step: '0.001',
@@ -291,7 +169,7 @@ function App() {
                   variant="outlined"
                   color="error"
                   disabled={processing}
-                  onClick={resetOnClick}
+                  onClick={reset}
                   css={css`
                     margin-right: 10px;
                   `}
@@ -301,7 +179,7 @@ function App() {
                 <Button
                   variant="outlined"
                   disabled={!canRemoveBox || processing}
-                  onClick={onRemoveBoxClick}
+                  onClick={removeBox}
                   css={css`
                     margin-right: 10px;
                   `}
@@ -314,7 +192,7 @@ function App() {
                     margin-right: 10px;
                   `}
                   disabled={processing}
-                  onClick={onAddBoxClick}
+                  onClick={addBox}
                 >
                   <Add />
                 </Button>
@@ -351,7 +229,7 @@ function App() {
                   initialValue={periods.xShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={(xShift) => {
-                    onPeriodsChange({ ...periods, xShift });
+                    setPeriods({ ...periods, xShift });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -365,7 +243,7 @@ function App() {
                   initialValue={periods.yShift}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={(yShift) => {
-                    onPeriodsChange({ ...periods, yShift });
+                    setPeriods({ ...periods, yShift });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -379,7 +257,7 @@ function App() {
                   initialValue={periods.zHeight}
                   inputValueValid={isInputValueValidPeriod}
                   onValidChange={(zHeight) => {
-                    onPeriodsChange({ ...periods, zHeight });
+                    setPeriods({ ...periods, zHeight });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -402,7 +280,7 @@ function App() {
                   initialValue={drawDistance.x}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={(x) => {
-                    onDrawDistanceChange({ ...drawDistance, x });
+                    setDrawDistance({ x });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -419,7 +297,7 @@ function App() {
                   initialValue={drawDistance.y}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={(y) => {
-                    onDrawDistanceChange({ ...drawDistance, y });
+                    setDrawDistance({ y });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -436,7 +314,7 @@ function App() {
                   initialValue={drawDistance.z}
                   inputValueValid={isInputValueValidDrawDistance}
                   onValidChange={(z) => {
-                    onDrawDistanceChange({ ...drawDistance, z });
+                    setDrawDistance({ z });
                   }}
                   readOnly={processing}
                   inputProps={{
@@ -457,7 +335,7 @@ function App() {
             flex: 1 1 100%;
           `}
         >
-          <MainScene walls={walls} boxes={boxes} boxCounts={boxCounts} />
+          <MainScene />
         </Panel>
       </div>
     </StyleProvider>

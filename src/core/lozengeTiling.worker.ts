@@ -2,8 +2,19 @@ import initWasm, {
   PeriodicLozengeTiling as PeriodicLozengeTilingWasm,
 } from '../../build/lib';
 import * as Comlink from 'comlink';
-import { DrawDistance, LozengeTilingPeriods } from './lozengeTiling';
 import { Vector3Tuple } from 'three';
+
+export interface LozengeTilingPeriods {
+  xShift: number;
+  yShift: number;
+  zHeight: number;
+}
+
+export interface DrawDistance {
+  x: number;
+  y: number;
+  z: number;
+}
 
 export class PeriodicLozengeTilingWorker {
   private lozengeTiling: PeriodicLozengeTilingWasm | null = null;
