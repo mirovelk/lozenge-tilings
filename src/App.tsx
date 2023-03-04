@@ -89,18 +89,11 @@ function App() {
   const { processing, showProgress, startProcessing, stopProcessing } =
     useProcessingProgress();
 
-  const [periods, setPeriods] = useState<LozengeTilingPeriods>({
-    xShift: 1,
-    yShift: 2,
-    zHeight: 2,
-  });
+  const [periods, setPeriods] = useState<LozengeTilingPeriods>(initialPeriods);
   const [iterations, setIterations] = useState(10);
   const [q, setQ] = useState(0.9);
-  const [drawDistance, setDrawDistance] = useState<DrawDistance>({
-    x: 10,
-    y: 10,
-    z: 10,
-  });
+  const [drawDistance, setDrawDistance] =
+    useState<DrawDistance>(initialDrawDistance);
   const [boxCounts, setBoxCounts] = useState<number[]>([]);
   const canRemoveBox = useMemo(
     () => boxCounts.length > 0 && boxCounts[boxCounts.length - 1] > 0,
