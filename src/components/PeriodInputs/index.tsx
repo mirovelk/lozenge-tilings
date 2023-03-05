@@ -1,7 +1,7 @@
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import ConfigNumberInputWithLabel from '../ConfigNumberInputWithLabel';
 import {
-  processingAtom,
+  changesDisabledAtom,
   startProcessingAtom,
   stopProcessingAtom,
 } from '../ProcessingWithProgress';
@@ -37,7 +37,7 @@ export const periodsAtom = atom(
 );
 
 function PeriodInputs() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const setConfigValid = useSetAtom(configValidAtom);
   const [periods, setPeriods] = useAtom(periodsAtom);
 
@@ -46,57 +46,59 @@ function PeriodInputs() {
       css={css`
         display: flex;
         align-items: baseline;
+        gap: 10px;
       `}
     >
+      <div>Periods:</div>
       <div
         css={css`
-          margin: 0 10px 0 0;
+          display: flex;
+          gap: 20px;
         `}
       >
-        Periods:
+        <ConfigNumberInputWithLabel
+          label="xShift:"
+          initialValue={periods.xShift}
+          inputValueValid={isInputValueValidPeriod}
+          onValidChange={(xShift) => {
+            setPeriods({ ...periods, xShift });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '0',
+          }}
+          onValidationChange={setConfigValid}
+        />
+        <ConfigNumberInputWithLabel
+          label="yShift:"
+          initialValue={periods.yShift}
+          inputValueValid={isInputValueValidPeriod}
+          onValidChange={(yShift) => {
+            setPeriods({ ...periods, yShift });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '0',
+          }}
+          onValidationChange={setConfigValid}
+        />
+        <ConfigNumberInputWithLabel
+          label="zHeight:"
+          initialValue={periods.zHeight}
+          inputValueValid={isInputValueValidPeriod}
+          onValidChange={(zHeight) => {
+            setPeriods({ ...periods, zHeight });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '0',
+          }}
+          onValidationChange={setConfigValid}
+        />
       </div>
-      <ConfigNumberInputWithLabel
-        label="xShift:"
-        initialValue={periods.xShift}
-        inputValueValid={isInputValueValidPeriod}
-        onValidChange={(xShift) => {
-          setPeriods({ ...periods, xShift });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '0',
-        }}
-        onValidationChange={setConfigValid}
-      />
-      <ConfigNumberInputWithLabel
-        label="yShift:"
-        initialValue={periods.yShift}
-        inputValueValid={isInputValueValidPeriod}
-        onValidChange={(yShift) => {
-          setPeriods({ ...periods, yShift });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '0',
-        }}
-        onValidationChange={setConfigValid}
-      />
-      <ConfigNumberInputWithLabel
-        label="zHeight:"
-        initialValue={periods.zHeight}
-        inputValueValid={isInputValueValidPeriod}
-        onValidChange={(zHeight) => {
-          setPeriods({ ...periods, zHeight });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '0',
-        }}
-        onValidationChange={setConfigValid}
-      />
     </div>
   );
 }

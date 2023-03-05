@@ -43,7 +43,6 @@ function ConfigNumberInputWithLabel({
       css={css`
         display: flex;
         align-items: baseline;
-        margin-right: 20px;
       `}
     >
       <Typography
@@ -61,9 +60,6 @@ function ConfigNumberInputWithLabel({
         type="number"
         error={!inputValueValid(inputValue)}
         onChange={onInputChange}
-        css={css`
-          margin-right: 10px;
-        `}
         {...props}
       />
     </div>

@@ -1,7 +1,7 @@
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { markovChainAtom } from '../MarkovChainCheckbox';
 import ConfigNumberInputWithLabel from '../ConfigNumberInputWithLabel';
-import { processingAtom } from '../ProcessingWithProgress';
+import { changesDisabledAtom } from '../ProcessingWithProgress';
 import { configValidAtom } from '../ConfigurationForm';
 
 function isInputValueValidQ(value: string) {
@@ -11,7 +11,7 @@ function isInputValueValidQ(value: string) {
 export const qAtom = atom(0.9);
 
 function MarkovChainQInput() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const markovChain = useAtomValue(markovChainAtom);
   const setConfigValid = useSetAtom(configValidAtom);
 
@@ -23,7 +23,7 @@ function MarkovChainQInput() {
       initialValue={q}
       inputValueValid={isInputValueValidQ}
       disabled={!markovChain}
-      readOnly={processing}
+      readOnly={changesDisabled}
       onValidChange={setQ}
       onValidationChange={setConfigValid}
       inputProps={{

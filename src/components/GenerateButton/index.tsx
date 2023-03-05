@@ -1,7 +1,7 @@
 import { atom, useAtomValue } from 'jotai';
 import { Button } from '@mui/material';
 import {
-  processingAtom,
+  changesDisabledAtom,
   startProcessingAtom,
   stopProcessingAtom,
 } from '../ProcessingWithProgress';
@@ -11,42 +11,62 @@ import { markovChainAtom } from '../MarkovChainCheckbox';
 import { boxesAtom } from '../MainScene/Boxes';
 import { lozengeTilingComlink } from '../../lozengeTilingComlink';
 import { configValidAtom } from '../ConfigurationForm';
+import { generatingContinuouslyAtom } from '../RunStopButton';
 
-const generateWithMarkovChainAtom = atom(null, async (get, set) => {
+export const generateBussyAtom = atom(false);
+
+const generateWithMarkovChainAtom = atom(null, async (get) => {
   const iterations = get(iterationsAtom);
   const q = get(qAtom);
-  set(startProcessingAtom);
   await lozengeTilingComlink.generateWithMarkovChain(iterations, q);
-  set(boxesAtom, await lozengeTilingComlink.getBoxVoxels());
-  set(stopProcessingAtom);
 });
 
-const generateByAddingOnlyAtom = atom(null, async (get, set) => {
+const generateByAddingOnlyAtom = atom(null, async (get) => {
   const iterations = get(iterationsAtom);
-  set(startProcessingAtom);
   await lozengeTilingComlink.generateByAddingOnly(iterations);
-  set(boxesAtom, await lozengeTilingComlink.getBoxVoxels());
-  set(stopProcessingAtom);
 });
 
-export const generateTilingAtom = atom(null, async (get, set) => {
-  const markovChain = get(markovChainAtom);
-  if (markovChain) {
-    set(generateWithMarkovChainAtom);
-  } else {
-    set(generateByAddingOnlyAtom);
+export const generateTilingAtom = atom(
+  null,
+  async (get, set, delayMs: number | undefined = undefined) => {
+    set(generateBussyAtom, true);
+
+    if (delayMs) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs)); // pause before updating
+    }
+
+    const markovChain = get(markovChainAtom);
+    const generatingContinuously = get(generatingContinuouslyAtom);
+
+    if (!generatingContinuously) {
+      set(startProcessingAtom);
+    }
+
+    if (markovChain) {
+      await set(generateWithMarkovChainAtom);
+    } else {
+      await set(generateByAddingOnlyAtom);
+    }
+    const boxes = await lozengeTilingComlink.getBoxVoxels();
+    await set(boxesAtom, boxes);
+
+    if (!generatingContinuously) {
+      set(stopProcessingAtom);
+    }
+
+    set(generateBussyAtom, false);
   }
-});
+);
 
 function GenerateButton() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const configValid = useAtomValue(configValidAtom);
 
   return (
     <Button
       variant="contained"
       type="submit" // runs generateTiling
-      disabled={!configValid || processing}
+      disabled={!configValid || changesDisabled}
     >
       Generate More
     </Button>

@@ -1,11 +1,11 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
-import { Checkbox, FormControlLabel } from '@mui/material';
-import { processingAtom } from '../ProcessingWithProgress';
+import { Checkbox, css, FormControlLabel } from '@mui/material';
+import { changesDisabledAtom } from '../ProcessingWithProgress';
 
 export const markovChainAtom = atom(true);
 
 function MarkovChainCheckbox() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const [markovChain, setMarkovChain] = useAtom(markovChainAtom);
 
   return (
@@ -14,9 +14,12 @@ function MarkovChainCheckbox() {
         <Checkbox
           checked={markovChain}
           onChange={() => setMarkovChain((prev) => !prev)}
-          disabled={processing}
+          disabled={changesDisabled}
         />
       }
+      css={css`
+        margin-right: 0;
+      `}
       label="Markov Chain"
     />
   );

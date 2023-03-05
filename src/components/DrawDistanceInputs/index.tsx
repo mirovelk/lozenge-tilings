@@ -1,7 +1,7 @@
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import ConfigNumberInputWithLabel from '../ConfigNumberInputWithLabel';
 import {
-  processingAtom,
+  changesDisabledAtom,
   startProcessingAtom,
   stopProcessingAtom,
 } from '../ProcessingWithProgress';
@@ -37,7 +37,7 @@ export const drawDistanceAtom = atom(
 );
 
 function PeriodInputs() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const setConfigValid = useSetAtom(configValidAtom);
   const [drawDistance, setDrawDistance] = useAtom(drawDistanceAtom);
 
@@ -46,68 +46,59 @@ function PeriodInputs() {
       css={css`
         display: flex;
         align-items: baseline;
+        gap: 10px;
       `}
     >
+      <div>Draw dist:</div>
       <div
         css={css`
-          margin: 0 10px 0 30px;
-          white-space: nowrap;
+          display: flex;
+          gap: 20px;
         `}
       >
-        Draw dist:
+        <ConfigNumberInputWithLabel
+          label="x:"
+          initialValue={drawDistance.x}
+          inputValueValid={isInputValueValidDrawDistance}
+          onValidChange={(x) => {
+            setDrawDistance({ x });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '1',
+          }}
+          onValidationChange={setConfigValid}
+        />
+        <ConfigNumberInputWithLabel
+          label="y:"
+          initialValue={drawDistance.y}
+          inputValueValid={isInputValueValidDrawDistance}
+          onValidChange={(y) => {
+            setDrawDistance({ y });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '1',
+          }}
+          onValidationChange={setConfigValid}
+        />
+        <ConfigNumberInputWithLabel
+          label="z:"
+          initialValue={drawDistance.z}
+          inputValueValid={isInputValueValidDrawDistance}
+          onValidChange={(z) => {
+            setDrawDistance({ z });
+          }}
+          readOnly={changesDisabled}
+          inputProps={{
+            step: '1',
+            min: '1',
+          }}
+          onValidationChange={setConfigValid}
+        />
       </div>
-
-      <ConfigNumberInputWithLabel
-        label="x:"
-        initialValue={drawDistance.x}
-        inputValueValid={isInputValueValidDrawDistance}
-        onValidChange={(x) => {
-          setDrawDistance({ x });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '1',
-        }}
-        onValidationChange={setConfigValid}
-        css={css`
-          margin-right: 10px;
-        `}
-      />
-      <ConfigNumberInputWithLabel
-        label="y:"
-        initialValue={drawDistance.y}
-        inputValueValid={isInputValueValidDrawDistance}
-        onValidChange={(y) => {
-          setDrawDistance({ y });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '1',
-        }}
-        onValidationChange={setConfigValid}
-        css={css`
-          margin-right: 10px;
-        `}
-      />
-      <ConfigNumberInputWithLabel
-        label="z:"
-        initialValue={drawDistance.z}
-        inputValueValid={isInputValueValidDrawDistance}
-        onValidChange={(z) => {
-          setDrawDistance({ z });
-        }}
-        readOnly={processing}
-        inputProps={{
-          step: '1',
-          min: '1',
-        }}
-        onValidationChange={setConfigValid}
-        css={css`
-          margin-right: 10px;
-        `}
-      />
     </div>
   );
 }

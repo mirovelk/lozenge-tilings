@@ -1,6 +1,6 @@
 import ConfigNumberInputWithLabel from '../ConfigNumberInputWithLabel';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { processingAtom } from '../ProcessingWithProgress';
+import { changesDisabledAtom } from '../ProcessingWithProgress';
 import { configValidAtom } from '../ConfigurationForm';
 
 function isInputValueValidIterations(value: string) {
@@ -12,7 +12,7 @@ export const iterationsAtom = atom(10);
 function IterationsInput() {
   const setConfigValid = useSetAtom(configValidAtom);
 
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const [iterations, setIterations] = useAtom(iterationsAtom);
 
   return (
@@ -21,7 +21,7 @@ function IterationsInput() {
       initialValue={iterations}
       inputValueValid={isInputValueValidIterations}
       onValidChange={setIterations}
-      readOnly={processing}
+      readOnly={changesDisabled}
       onValidationChange={setConfigValid}
     />
   );

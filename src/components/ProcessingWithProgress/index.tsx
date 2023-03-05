@@ -1,18 +1,19 @@
 import { css, LinearProgress } from '@mui/material';
 import { atom, useAtomValue } from 'jotai';
 
-export const processingAtom = atom(false);
+export const changesDisabledAtom = atom(false);
 export const showProgressAtom = atom(false);
 
-let showProgressTimeout: ReturnType<typeof setTimeout> | null = null;
-const processingWithProgressAtom = atom(
-  (get) => get(processingAtom) && get(showProgressAtom),
-  (_, set, processing: boolean) => {
+let showProgressTimeout: ReturnType<typeof setTimeout> | undefined;
+
+const delayedProgressAtom = atom(
+  (get) => get(changesDisabledAtom) && get(showProgressAtom),
+  (_, set, showProgress: boolean) => {
     if (showProgressTimeout) {
       clearTimeout(showProgressTimeout);
     }
-    set(processingAtom, processing);
-    if (processing) {
+    set(changesDisabledAtom, showProgress);
+    if (showProgress) {
       showProgressTimeout = setTimeout(() => {
         set(showProgressAtom, true);
       }, 1000);
@@ -22,10 +23,10 @@ const processingWithProgressAtom = atom(
   }
 );
 export const startProcessingAtom = atom(null, (_, set) => {
-  set(processingWithProgressAtom, true);
+  set(delayedProgressAtom, true);
 });
 export const stopProcessingAtom = atom(null, (_, set) => {
-  set(processingWithProgressAtom, false);
+  set(delayedProgressAtom, false);
 });
 
 function ProcessingWithProgress() {

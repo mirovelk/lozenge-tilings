@@ -1,7 +1,7 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { Button, css } from '@mui/material';
+import { Button } from '@mui/material';
 import {
-  processingAtom,
+  changesDisabledAtom,
   startProcessingAtom,
   stopProcessingAtom,
 } from '../ProcessingWithProgress';
@@ -20,18 +20,15 @@ export const resetAtom = atom(null, async (get, set) => {
 });
 
 function ResetButton() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const reset = useSetAtom(resetAtom);
 
   return (
     <Button
       variant="outlined"
       color="error"
-      disabled={processing}
+      disabled={changesDisabled}
       onClick={reset}
-      css={css`
-        margin-right: 10px;
-      `}
     >
       Reset
     </Button>

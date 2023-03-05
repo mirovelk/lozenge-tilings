@@ -1,7 +1,7 @@
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import { Button, css } from '@mui/material';
+import { Button } from '@mui/material';
 import {
-  processingAtom,
+  changesDisabledAtom,
   startProcessingAtom,
   stopProcessingAtom,
 } from '../ProcessingWithProgress';
@@ -17,18 +17,11 @@ export const addBoxAtom = atom(null, async (_, set) => {
 });
 
 function AddBoxButton() {
-  const processing = useAtomValue(processingAtom);
+  const changesDisabled = useAtomValue(changesDisabledAtom);
   const addBox = useSetAtom(addBoxAtom);
 
   return (
-    <Button
-      variant="outlined"
-      css={css`
-        margin-right: 10px;
-      `}
-      disabled={processing}
-      onClick={addBox}
-    >
+    <Button variant="outlined" disabled={changesDisabled} onClick={addBox}>
       <Add />
     </Button>
   );
