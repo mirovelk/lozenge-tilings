@@ -10,7 +10,7 @@ import {
 import { useCallback, useState } from 'react';
 import MainScene from './components/MainScene';
 import ConfigNumberInputWithLabel from './components/ConfigNumberInputWithLabel';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 import StyleProvider from './components/StyleProvider';
 
@@ -51,10 +51,12 @@ function isInputValueValidDrawDistance(value: string) {
 }
 
 function App() {
+  // TODO better validation
   const [configValid, setConfigValid] = useState(true);
 
-  const [processing] = useAtom(processingAtom);
-  const [showProgress] = useAtom(showProgressAtom);
+  // TODO separate into smaller components
+  const processing = useAtomValue(processingAtom);
+  const showProgress = useAtomValue(showProgressAtom);
 
   const [iterations, setIterations] = useAtom(iterationsAtom);
   const [q, setQ] = useAtom(qAtom);
@@ -66,10 +68,10 @@ function App() {
 
   const [markovChain, setMarkovChain] = useAtom(markovChainAtom);
 
-  const [, generateTiling] = useAtom(generateTilingAtom);
-  const [, removeBox] = useAtom(removeBoxAtom);
-  const [, addBox] = useAtom(addBoxAtom);
-  const [, reset] = useAtom(resetAtom);
+  const generateTiling = useSetAtom(generateTilingAtom);
+  const removeBox = useSetAtom(removeBoxAtom);
+  const addBox = useSetAtom(addBoxAtom);
+  const reset = useSetAtom(resetAtom);
 
   const onConfigSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
