@@ -55,7 +55,8 @@ function RunPauseButton() {
 
   return (
     <Button
-      variant="outlined"
+      variant={generatingContinuosuly ? 'contained' : 'outlined'}
+      color={generatingContinuosuly ? 'error' : 'primary'}
       disabled={!configValid}
       onClick={() => {
         setGeneratingContinuosuly((running) => !running);
