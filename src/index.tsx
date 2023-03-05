@@ -7,6 +7,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App';
+import { lozengeTilingComlink } from './lozengeTilingComlink';
+
+await lozengeTilingComlink.init();
 
 const container = document.getElementById('root');
 

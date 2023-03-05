@@ -1,76 +1,27 @@
-import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { Vector3Tuple } from 'three';
 import edgeRed from './edgeRed.png';
-import edgeBlue from './edgeBlue.png';
-import { useAtom } from 'jotai';
-import { boxesAtom, wallsAtom } from '../../../appState';
+import { atom, useAtom } from 'jotai';
+import VoxelInstances from '../VoxelInstances';
+import { boxCountsAtom } from '../BoxCounters';
+import { lozengeTilingComlink } from '../../../lozengeTilingComlink';
 
-const boxTextureRed = new THREE.TextureLoader().load(edgeRed);
-const boxTextureBlue = new THREE.TextureLoader().load(edgeBlue);
+const texture = new THREE.TextureLoader().load(edgeRed);
 
-const voxelSize = 50;
-
-function alignToGrid(
-  position: [number, number, number]
-): [number, number, number] {
-  return [
-    voxelSize * position[0] + voxelSize / 2,
-    voxelSize * position[1] + voxelSize / 2,
-    voxelSize * position[2] + voxelSize / 2,
-  ];
-}
-
-function VoxelInstances({
-  voxels,
-  map,
-}: {
-  voxels: Vector3Tuple[];
-  map: THREE.Texture;
-}) {
-  const boxInstancedMeshRef: React.Ref<
-    THREE.InstancedMesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
-  > | null = useRef(null);
-
-  useEffect(() => {
-    if (boxInstancedMeshRef.current) {
-      const matrix = new THREE.Matrix4();
-      // Set positions
-      for (let i = 0; i < voxels.length; i++) {
-        matrix.setPosition(...alignToGrid(voxels[i]));
-        boxInstancedMeshRef?.current?.setMatrixAt(i, matrix);
-      }
-      // Update the instance
-      boxInstancedMeshRef.current.instanceMatrix.needsUpdate = true;
-    }
-  }, [voxels]);
-
-  return (
-    <>
-      <instancedMesh
-        ref={boxInstancedMeshRef}
-        args={[undefined, undefined, voxels.length]}
-      >
-        <boxGeometry args={[voxelSize, voxelSize, voxelSize]} />
-        <meshStandardMaterial map={map} />
-      </instancedMesh>
-    </>
-  );
-}
+export const boxesAtom = atom([], async (_, set, boxes) => {
+  set(boxesAtom, boxes);
+  const boxCounts = await lozengeTilingComlink.getPeriodBoxCount();
+  if (boxCounts === 0) {
+    set(boxCountsAtom, []);
+  } else {
+    set(boxCountsAtom, (prevBoxCounts) => [...prevBoxCounts, boxCounts]);
+  }
+});
 
 function Boxes() {
-  const [walls] = useAtom(wallsAtom);
   const [boxes] = useAtom(boxesAtom);
 
   return (
-    <>
-      {walls.length > 0 && (
-        <VoxelInstances voxels={walls} map={boxTextureBlue} />
-      )}
-      {boxes.length > 0 && (
-        <VoxelInstances voxels={boxes} map={boxTextureRed} />
-      )}
-    </>
+    <>{boxes.length > 0 && <VoxelInstances voxels={boxes} map={texture} />}</>
   );
 }
 

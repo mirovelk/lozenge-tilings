@@ -1,4 +1,6 @@
 import * as Comlink from 'comlink';
+import { initialDrawDistance } from './components/DrawDistanceInputs';
+import { initialPeriods } from './components/PeriodInputs';
 import { PeriodicLozengeTilingWorker } from './core/lozengeTiling.worker';
 
 const lozengeTilingWorker = new Worker(
@@ -12,4 +14,9 @@ const lozengeTilingWorker = new Worker(
 const LozengeTilingComlink =
   Comlink.wrap<typeof PeriodicLozengeTilingWorker>(lozengeTilingWorker);
 
-export { LozengeTilingComlink };
+const lozengeTilingComlink = await new LozengeTilingComlink(
+  initialPeriods,
+  initialDrawDistance
+);
+
+export { lozengeTilingComlink };

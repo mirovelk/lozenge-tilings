@@ -4,7 +4,8 @@ import { GizmoHelper, GizmoViewport, OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 
 import Boxes from './Boxes';
-import Counters from './Counters';
+import BoxCounters from './BoxCounters';
+import Walls from './Walls';
 
 const helpersSize = 10000;
 
@@ -36,6 +37,7 @@ function MainScene() {
           rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
         /> */}
         {/* <axesHelper args={[helpersSize]} /> */}
+        <Walls />
         <Boxes />
         <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
           <GizmoViewport
@@ -57,7 +59,7 @@ function MainScene() {
             padding: 10px;
           `}
         >
-          <Counters />
+          <BoxCounters />
         </Paper>
       </div>
     </div>
